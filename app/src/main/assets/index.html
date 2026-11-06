@@ -1,0 +1,1489 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>L'Eau de Là</title>
+<style>
+/* Mise en page : écran d'appli en colonne (contenu qui défile + barre d'onglets fixe en bas).
+   Esthétique de l'étiquette L'Eau de Là : papier blanc, filet vert à volutes, capitales fines
+   à doubles filets, ardoise et or en accents. */
+@font-face{font-family:"Federo";src:url("Federo.ttf") format("truetype");font-display:swap}
+:root{
+  --bg:#f1f2ea; --paper:#fbfbf6; --sunk:#e8eae0; --line:#d6dacb;
+  --ink:#23262f; --muted:#666b73; --slate:#4a4f6b;
+  --green:#3f8a37; --green-ink:#33702c; --green-soft:#e2eed9;
+  --gold:#b08a35; --gold-soft:#f1e7cc;
+  --danger:#a8321f; --danger-bg:#f8e3dc;
+  --water:#5a8fa8; --sugar:#c9a86a;
+  --f-display:"Federo","sans-serif-condensed","Roboto Condensed","Arial Narrow",sans-serif;
+  --f-body:"Roboto",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --nav-h:62px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#13151b; --paper:#1b1e26; --sunk:#252933; --line:#323743;
+  --ink:#eceee6; --muted:#9aa0a8; --slate:#a3a9c9;
+  --green:#7cbf62; --green-ink:#93d278; --green-soft:#22321e;
+  --gold:#d9b45f; --gold-soft:#3a301a;
+  --danger:#ff9b85; --danger-bg:#3a1d17;
+  --water:#7fb6cf; --sugar:#d9bf8a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#13151b; --paper:#1b1e26; --sunk:#252933; --line:#323743;
+  --ink:#eceee6; --muted:#9aa0a8; --slate:#a3a9c9;
+  --green:#7cbf62; --green-ink:#93d278; --green-soft:#22321e;
+  --gold:#d9b45f; --gold-soft:#3a301a;
+  --danger:#ff9b85; --danger-bg:#3a1d17;
+  --water:#7fb6cf; --sugar:#d9bf8a; color-scheme:dark}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;width:100%;overflow:hidden}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;display:flex;flex-direction:column}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+[hidden]{display:none!important}
+:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+
+#scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.page{width:100%;max-width:560px;margin:0 auto;padding:12px 16px 28px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.view{display:flex;flex-direction:column;gap:14px;min-width:0}
+.view > *{min-width:0}
+
+/* ---- En-tête façon étiquette ---- */
+.label{position:relative;background:var(--paper);border:2px solid var(--green);border-radius:3px;padding:14px 18px 12px;text-align:center}
+.label::after{content:"";position:absolute;inset:4px;border:1px solid var(--green);opacity:.35;pointer-events:none;border-radius:1px}
+.curl{position:absolute;width:30px;height:30px;color:var(--green);pointer-events:none}
+.curl.tl{top:-2px;left:-2px}.curl.tr{top:-2px;right:-2px;transform:scaleX(-1)}
+.curl.bl{bottom:-2px;left:-2px;transform:scaleY(-1)}.curl.br{bottom:-2px;right:-2px;transform:scale(-1,-1)}
+.brand{display:inline-block;font-family:var(--f-display);font-size:13px;letter-spacing:.18em;padding:0 4px 3px;border-bottom:1.5px solid var(--ink)}
+.brand-row{display:flex;justify-content:center;align-items:center;position:relative}
+.backup-btn{position:absolute;right:-6px;top:-6px;border:0;background:transparent;color:var(--muted);padding:6px;border-radius:8px;display:flex;z-index:1}
+.backup-btn svg{width:20px;height:20px}
+.sync-btn{right:auto;left:-6px}
+.code{font-family:var(--f-display);font-size:46px;letter-spacing:.2em;color:var(--green-ink);text-align:center;font-variant-numeric:tabular-nums}
+.spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--green-soft);border-top-color:var(--green);animation:spin 1s linear infinite;margin:6px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sync-sum{display:flex;flex-direction:column;gap:6px;font-size:14px}
+.sync-sum div{display:flex;justify-content:space-between;gap:10px}
+.sync-sum b{font-variant-numeric:tabular-nums}
+.title{font-family:var(--f-display);font-weight:400;color:var(--green-ink);margin:8px 0 0;font-size:28px;line-height:1.05;letter-spacing:.03em;text-transform:uppercase;text-wrap:balance}
+.rules{display:block;height:5px;border-top:1.5px solid var(--green);border-bottom:1px solid var(--green);margin:6px auto 0;width:min(240px,80%)}
+.subtitle{font-family:var(--f-display);color:var(--green-ink);font-size:13.5px;letter-spacing:.12em;text-transform:uppercase;margin-top:6px}
+
+/* ---- Éléments de base ---- */
+.card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.card h2,.sec-title{font-family:var(--f-display);font-weight:400;font-size:18px;letter-spacing:.06em;text-transform:uppercase;margin:0;color:var(--ink)}
+.sec-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.lbl{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.inp{display:flex;align-items:stretch;border:1px solid var(--line);border-radius:10px;background:var(--bg);overflow:hidden;min-width:0}
+.inp input,.inp select,.inp textarea{flex:1 1 0;width:0;min-width:0;border:0;background:transparent;font-size:16.5px;padding:10px;outline:none;font-variant-numeric:tabular-nums}
+.inp textarea{resize:vertical;min-height:90px;line-height:1.45;font-size:15px}
+.inp span{display:flex;align-items:center;padding:0 10px;color:var(--muted);font-size:13px;background:var(--sunk);white-space:nowrap}
+.inp:focus-within{border-color:var(--green);box-shadow:0 0 0 3px var(--green-soft)}
+.seg{display:flex;background:var(--sunk);border-radius:10px;padding:3px;gap:3px;min-width:0}
+.seg button{flex:1 1 0;min-width:0;border:0;background:transparent;color:var(--muted);font-weight:600;font-size:13px;padding:8px 4px;border-radius:8px;line-height:1.2}
+.seg button[aria-pressed="true"]{background:var(--paper);color:var(--green-ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.seg.unit{flex:0 0 auto}.seg.unit button{flex:0 0 auto;padding:8px 10px}
+.amt{display:flex;gap:8px;align-items:stretch;min-width:0}.amt .inp{flex:1 1 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{border:1px solid var(--line);background:var(--bg);font-size:13px;padding:7px 11px;border-radius:999px;font-variant-numeric:tabular-nums}
+.chips button.on,.chips button[aria-pressed="true"]{border-color:var(--green);background:var(--green-soft);color:var(--green-ink);font-weight:600}
+.btn{border:0;border-radius:10px;padding:12px 16px;font-weight:600;font-size:15px;background:var(--green);color:var(--paper)}
+.btn.ghost{background:transparent;color:var(--green-ink);border:1px solid var(--green)}
+.btn.small{padding:8px 12px;font-size:14px}
+.btn.danger{background:var(--danger);color:var(--paper)}
+.btn.danger-ghost{background:transparent;color:var(--danger);border:1px solid var(--danger)}
+.btn.block{width:100%}
+.btn:disabled{opacity:.45}
+.link{border:0;background:transparent;color:var(--green-ink);font-weight:600;font-size:14px;padding:4px 0;text-decoration:underline}
+.note{font-size:13px;color:var(--muted);margin:0}
+.note b{color:var(--ink);font-weight:600}
+.msg{border-radius:10px;padding:12px 14px;font-size:14px;background:var(--danger-bg);color:var(--danger)}
+.warn{color:var(--danger);font-weight:600}
+.stats{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.stat{background:var(--paper);padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.stat .v{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.stat .k{font-size:12px;color:var(--muted)}
+.big{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.big .v{font-family:var(--f-display);font-size:40px;line-height:1;color:var(--green-ink);font-variant-numeric:tabular-nums}
+.big .u{color:var(--muted)}
+.empty{background:var(--paper);border:1.5px dashed var(--line);border-radius:12px;padding:22px 18px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center}
+.empty p{margin:0;color:var(--muted);max-width:36ch}
+.empty .sec-title{color:var(--green-ink)}
+.pill{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:999px;white-space:nowrap}
+.pill.low{background:var(--gold-soft);color:var(--gold)}
+.pill.out{background:var(--danger-bg);color:var(--danger)}
+
+/* ---- Calcul ---- */
+.recipe-calc{background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.recipe-head{padding:14px 16px 8px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.recipe-head small{color:var(--muted);font-size:12.5px}
+table.r{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;table-layout:fixed}
+table.r th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;text-align:right;padding:6px 12px;border-bottom:1px solid var(--line)}
+table.r th:first-child{text-align:left;width:40%}
+table.r td{padding:11px 12px;border-bottom:1px solid var(--line);text-align:right;font-size:16px;font-weight:500;white-space:nowrap}
+table.r td:first-child{text-align:left;font-size:14.5px;font-weight:600;white-space:normal}
+table.r td:first-child i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px}
+table.r tr:last-child td{border-bottom:0}
+td.na{color:var(--muted)}
+.bar{display:flex;height:8px;border-radius:4px;overflow:hidden;margin:0 16px 4px;background:var(--sunk)}
+.bar div{height:100%}
+.legend{display:flex;gap:12px;flex-wrap:wrap;padding:6px 16px 14px;font-size:12px;color:var(--muted)}
+.legend b{font-weight:600;color:var(--ink)}
+ol.method{margin:0;padding-left:20px;font-size:14px;display:flex;flex-direction:column;gap:4px}
+details.ref{background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+details.ref summary{padding:14px 16px;font-weight:600}
+table.rt{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
+table.rt th,table.rt td{padding:7px 16px;text-align:right;border-top:1px solid var(--line)}
+table.rt th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+table.rt tr.hl td{background:var(--green-soft)}
+
+/* ---- Listes (stock, consommables, mouvements) ---- */
+.search{flex:1 1 160px}
+.list{display:flex;flex-direction:column;background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.list-cap{padding:9px 14px;background:var(--sunk);font-family:var(--f-display);font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between}
+.row{display:flex;align-items:center;gap:10px;padding:10px 10px 10px 14px;border-top:1px solid var(--line);min-width:0}
+.list > .row:first-child,.list-cap + .row{border-top:0}
+.row-main{flex:1;min-width:0;border:0;background:transparent;text-align:left;padding:4px 0;display:flex;flex-direction:column;gap:2px}
+.row-name{font-weight:600;font-size:15px;overflow-wrap:anywhere}
+.row-meta{font-size:12.5px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.qty{display:flex;align-items:center;gap:2px;flex:0 0 auto}
+.qty button{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center}
+.qty .n{min-width:42px;text-align:center;font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
+.qty .n.out{color:var(--danger)}
+.mv{display:flex;gap:10px;align-items:flex-start;padding:10px 14px;border-top:1px solid var(--line)}
+.list > .mv:first-child{border-top:0}
+.mv .md{font-size:12px;color:var(--muted);width:46px;flex:0 0 auto;font-variant-numeric:tabular-nums;line-height:1.3}
+.mv .mi{flex:1;min-width:0;font-size:14px}
+.mv .mi small{display:block;color:var(--muted);font-size:12px}
+.mv .mq{font-weight:700;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.mq.plus{color:var(--green-ink)}.mq.minus{color:var(--danger)}
+.del{border:0;background:transparent;color:var(--muted);font-size:12px;padding:2px 0;text-decoration:underline}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 14px;background:var(--danger-bg);color:var(--danger);font-size:13.5px;border-top:1px solid var(--line)}
+.confirm.round{border-radius:10px;border:0}
+.confirm .btn{padding:6px 10px;font-size:13px}
+.cap-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:10px 0;border-top:1px solid var(--line)}
+.cap-row:first-of-type{border-top:0}
+.cap-row .cv{font-family:var(--f-display);font-size:22px;color:var(--green-ink);text-align:right;font-variant-numeric:tabular-nums}
+.cap-row small{grid-column:1/-1;color:var(--muted);font-size:12.5px}
+
+/* ---- Éditeurs de lignes (composition, ingrédients) ---- */
+.bom{display:flex;flex-direction:column;gap:8px}
+.bom-row{display:grid;grid-template-columns:minmax(0,1fr) 58px auto 50px 34px;gap:6px;align-items:center}
+.bom-row select,.bom-row input,.ing-row input,.ing-row select{width:100%;min-width:0;border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:8px 6px;font-size:14.5px;font-variant-numeric:tabular-nums}
+.bom-row .per{font-size:12px;color:var(--muted);white-space:nowrap}
+.ing-row{display:grid;grid-template-columns:minmax(0,1fr) 64px 72px 34px;gap:6px;align-items:center}
+.x{width:34px;height:34px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--muted);font-size:18px;line-height:1}
+.uses{display:flex;flex-direction:column;gap:6px;font-size:14px}
+.uses div{display:flex;justify-content:space-between;gap:10px}
+.uses div > span:last-child{font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ---- Recettes ---- */
+.rcards{display:flex;flex-direction:column;gap:10px}
+.rcard{position:relative;border:1px solid var(--line);background:var(--paper);border-radius:12px;padding:14px 16px;text-align:left;display:flex;flex-direction:column;gap:6px;width:100%}
+.rcard::before{content:"";position:absolute;inset:4px;border:1px solid var(--green);opacity:.25;border-radius:9px;pointer-events:none}
+.rcard .rn{font-family:var(--f-display);font-size:19px;letter-spacing:.04em;text-transform:uppercase;color:var(--green-ink);line-height:1.15}
+.rcard .rm{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:12px;padding:3px 8px;border-radius:999px;background:var(--sunk);color:var(--muted);font-variant-numeric:tabular-nums}
+table.ing{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+table.ing td{padding:9px 0;border-top:1px solid var(--line);font-size:15px}
+table.ing tr:first-child td{border-top:0}
+table.ing td:last-child{text-align:right;font-weight:600;white-space:nowrap;padding-left:10px}
+.prose{white-space:pre-wrap;font-size:14.5px;margin:0;overflow-wrap:anywhere}
+.timeline{display:flex;gap:8px;flex-wrap:wrap}
+.timeline .tag{background:var(--gold-soft);color:var(--gold);font-weight:600}
+
+/* ---- Ventes ---- */
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}
+.tile{position:relative;border:1px solid var(--line);background:var(--paper);border-radius:12px;padding:12px;text-align:left;display:flex;flex-direction:column;gap:4px;min-height:84px;min-width:0}
+.tile .tn{font-weight:600;font-size:14.5px;line-height:1.25;overflow-wrap:anywhere}
+.tile .tp{font-size:15px;color:var(--green-ink);font-weight:600;font-variant-numeric:tabular-nums;margin-top:auto}
+.tile .ts{font-size:12px;color:var(--muted)}
+.tile.dim{opacity:.45}
+.tile .badge{position:absolute;top:-6px;right:-6px;min-width:24px;height:24px;border-radius:12px;background:var(--green);color:var(--paper);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 6px}
+.cart-line{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.cart-line:first-of-type{border-top:0}
+.cart-line .cn{font-weight:600;min-width:0;overflow-wrap:anywhere}
+.cart-line .ct{font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+.cart-line .cp{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.cart-line .cp input{width:80px;border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:6px 8px;font-size:15px;font-variant-numeric:tabular-nums}
+.cart-total{display:flex;justify-content:space-between;align-items:baseline;border-top:1.5px solid var(--green);padding-top:10px}
+.cart-total .v{font-family:var(--f-display);font-size:30px;color:var(--green-ink);font-variant-numeric:tabular-nums}
+.day{display:flex;flex-direction:column;background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.day-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:10px 14px;background:var(--sunk);font-size:13px}
+.day-head b{font-family:var(--f-display);font-weight:400;font-size:15px;letter-spacing:.05em;text-transform:uppercase}
+.day-head span{font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+.sale{display:flex;gap:10px;align-items:flex-start;padding:10px 14px;border-top:1px solid var(--line)}
+.day-head + .sale{border-top:0}
+.sale .st{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;width:40px;flex:0 0 auto;padding-top:1px}
+.sale .si{flex:1;min-width:0;font-size:14px}
+.sale .si small{display:block;color:var(--muted);font-size:12px}
+.sale .sv{font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+
+/* ---- Graphique ---- */
+.chart-read{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13px;color:var(--muted);min-height:22px}
+.chart-read b{color:var(--ink);font-variant-numeric:tabular-nums;font-size:15px;text-align:right}
+svg.chart{display:block;width:100%;height:auto;touch-action:pan-y}
+svg.chart text{font-family:var(--f-body);font-size:10.5px;fill:var(--muted)}
+svg.chart .grid{stroke:var(--line);stroke-width:1}
+svg.chart .b{fill:var(--green);opacity:.85}
+svg.chart .b.today{fill:var(--gold);opacity:1}
+svg.chart .b.sel{fill:var(--slate);opacity:1}
+svg.chart .avg{stroke:var(--gold);stroke-width:1.2;stroke-dasharray:4 3}
+.top{display:flex;flex-direction:column;gap:10px}
+.top-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;font-size:14px}
+.top-row .tb{grid-column:1/-1;height:6px;border-radius:3px;background:var(--sunk);overflow:hidden}
+.top-row .tb div{height:100%;background:var(--green)}
+.top-row span:nth-child(2){font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+
+/* ---- Barre d'onglets ---- */
+nav.tabs{flex:0 0 auto;background:var(--paper);border-top:2px solid var(--green);display:grid;grid-template-columns:repeat(6,minmax(0,1fr));height:var(--nav-h)}
+nav.tabs button{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--muted);font-family:var(--f-display);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;min-width:0;padding:0 1px;white-space:nowrap;overflow:hidden}
+nav.tabs svg{width:22px;height:22px;flex:0 0 auto}
+nav.tabs button[aria-current="page"]{color:var(--green-ink)}
+nav.tabs button[aria-current="page"] svg{stroke-width:2.1}
+
+/* ---- Feuille et toast ---- */
+.scrim{position:fixed;inset:0;background:rgba(10,12,16,.45);z-index:30}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:31;background:var(--paper);border-radius:18px 18px 0 0;border-top:2px solid var(--green);max-height:90%;overflow-y:auto;overflow-x:hidden;padding:18px 16px 22px}
+.sheet-in{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:14px;min-width:0}
+.sheet .grab{width:40px;height:4px;border-radius:2px;background:var(--line);margin:-6px auto 0}
+.sheet-actions{display:flex;gap:8px;flex-wrap:wrap}
+.sheet-actions .btn{flex:1 1 120px}
+.toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + 14px);transform:translateX(-50%);z-index:40;background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:10px;font-size:14px;width:max-content;max-width:calc(100% - 32px);box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.sheet:not([hidden]) ~ .toast{bottom:auto;top:16px}
+@media (max-width:370px){.title{font-size:24px}table.r td{font-size:15px;padding:10px 8px}table.r th{padding:6px 8px}nav.tabs button{font-size:9.5px}}
+/* ---- Tablette à l'horizontale (Crosscall Core-T4 : ~850 × 530 points) ---- */
+.tablet-only{display:none}
+.cart-empty{border:1.5px dashed var(--line);border-radius:12px;padding:22px 18px;flex-direction:column;gap:8px;text-align:center;align-items:center}
+@media (min-width:720px){
+  body{flex-direction:row}
+  nav.tabs{order:-1;width:104px;height:auto;grid-template-columns:1fr;grid-auto-rows:minmax(62px,auto);align-content:center;gap:4px;border-top:0;border-right:2px solid var(--green);padding:10px 0}
+  nav.tabs button{font-size:11.5px;gap:5px;padding:8px 4px;margin:0 8px;border-radius:12px}
+  nav.tabs svg{width:26px;height:26px}
+  nav.tabs button[aria-current="page"]{background:var(--green-soft)}
+  .page{max-width:1180px;padding:14px 24px 32px;gap:16px}
+  .label{padding:10px 18px 9px}
+  .title{font-size:24px;margin-top:4px}
+  .rules{margin-top:4px}
+  .subtitle{font-size:12px;margin-top:4px}
+  .split{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:20px;align-items:start}
+  .sticky-side{position:sticky;top:0;z-index:2;box-shadow:0 6px 18px rgba(0,0,0,.08)}
+  .tablet-only{display:flex}
+  .rcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));align-items:start}
+  .tiles{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  .tile{min-height:108px;padding:14px}
+  .tile .tn{font-size:15.5px}
+  .tile .tp{font-size:18px}
+  .qty button{width:44px;height:44px}
+  .sheet{left:50%;right:auto;top:50%;bottom:auto;transform:translate(-50%,-50%);width:min(620px,calc(100% - 48px));max-height:calc(100% - 40px);border:2px solid var(--green);border-radius:18px}
+  .sheet .grab{display:none}
+  .toast{left:calc(50% + 52px);bottom:22px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="curl" viewBox="0 0 30 30"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+      <path d="M2 28 V10 C2 5 5 2 10 2 H28"/><path d="M7 24 C7 13 13 7 24 7"/>
+      <path d="M12 7.5 C9.5 9 9 12 11 13.5 C13 15 15.5 13.5 15 11.5"/></g></symbol>
+  </defs>
+</svg>
+
+<main id="scroll"><div class="page">
+  <header class="label">
+    <svg class="curl tl"><use href="#curl"/></svg><svg class="curl tr"><use href="#curl"/></svg>
+    <svg class="curl bl"><use href="#curl"/></svg><svg class="curl br"><use href="#curl"/></svg>
+    <div class="brand-row">
+      <span class="brand">L'EAU DE LÀ</span>
+      <button class="backup-btn sync-btn" id="openSync" aria-label="Synchroniser avec l'autre téléphone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10a8 8 0 0 1 14.3-4.3L20 8"/><path d="M20 3v5h-5"/><path d="M20 14a8 8 0 0 1-14.3 4.3L4 16"/><path d="M4 21v-5h5"/></svg></button>
+      <button class="backup-btn" id="openBackup" aria-label="Sauvegarde des données"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3z"/><path d="M4 7v10c0 1.7 3.6 3 8 3s8-1.3 8-3V7"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></button>
+    </div>
+    <h1 class="title" id="viewTitle">Calcul</h1>
+    <span class="rules"></span>
+    <div class="subtitle" id="viewSub">Alcool, eau & sucre</div>
+  </header>
+
+  <!-- ================= CALCUL ================= -->
+  <section id="v-calcul" class="view">
+    <div class="seg" id="calcMode">
+      <button type="button" data-v="recette">Dosage</button>
+      <button type="button" data-v="densite">Masse ↔ volume</button>
+    </div>
+
+    <div id="calc-recette" class="view split">
+      <div class="col-main view">
+      <div class="card">
+        <h2>Ingrédients et cible</h2>
+        <div class="row2">
+          <div class="field"><label class="lbl" for="baseAbv">Alcool de base</label>
+            <div class="inp"><input id="baseAbv" inputmode="decimal" autocomplete="off"><span>% vol</span></div></div>
+          <div class="field"><label class="lbl" for="targetAbv">Degré visé</label>
+            <div class="inp"><input id="targetAbv" inputmode="decimal" autocomplete="off"><span>% vol</span></div></div>
+        </div>
+        <div class="field"><label class="lbl" for="sugar">Sucre dans la liqueur</label>
+          <div class="amt"><div class="inp"><input id="sugar" inputmode="decimal" autocomplete="off"></div>
+            <div class="seg unit" id="sugarUnit"><button type="button" data-v="gl">g/L</button><button type="button" data-v="pct">% masse</button></div></div></div>
+        <div class="field"><span class="lbl">Je pars de</span>
+          <div class="seg" id="basis"><button type="button" data-v="final">Liqueur voulue</button><button type="button" data-v="base">Alcool disponible</button></div>
+          <div class="amt"><div class="inp"><input id="amount" inputmode="decimal" autocomplete="off" aria-label="Quantité"></div>
+            <div class="seg unit" id="amountUnit"><button type="button" data-v="L">L</button><button type="button" data-v="kg">kg</button></div></div></div>
+      </div>
+
+      </div>
+      <div class="col-side view">
+      <div id="liqMsg" class="msg" hidden></div>
+
+      <div class="recipe-calc" id="recipeCalc">
+        <div class="recipe-head"><h2 class="sec-title">Dosage</h2><small id="recipeSub"></small></div>
+        <table class="r">
+          <thead><tr><th>Ingrédient</th><th>À peser</th><th>À mesurer</th></tr></thead>
+          <tbody>
+            <tr><td><i style="background:var(--gold)"></i><span id="baseName">Alcool</span></td><td id="rAlcG"></td><td id="rAlcV"></td></tr>
+            <tr><td><i style="background:var(--water)"></i>Eau</td><td id="rWatG"></td><td id="rWatV"></td></tr>
+            <tr><td><i style="background:var(--sugar)"></i>Sucre</td><td id="rSugG"></td><td class="na">—</td></tr>
+          </tbody>
+        </table>
+        <div class="bar" aria-hidden="true"><div id="bE" style="background:var(--gold)"></div><div id="bW" style="background:var(--water)"></div><div id="bS" style="background:var(--sugar)"></div></div>
+        <div class="legend"><span>Éthanol <b id="lE"></b></span><span>Eau <b id="lW"></b></span><span>Sucre <b id="lS"></b></span><span>(en masse)</span></div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><span class="v" id="sVol"></span><span class="k">Volume final</span></div>
+        <div class="stat"><span class="v" id="sMass"></span><span class="k">Masse finale</span></div>
+        <div class="stat"><span class="v" id="sDens"></span><span class="k">Densité de la liqueur</span></div>
+        <div class="stat"><span class="v" id="sMassAbv"></span><span class="k">Alcool en masse</span></div>
+        <div class="stat"><span class="v" id="sSugar"></span><span class="k" id="sSugarK">Sucre</span></div>
+        <div class="stat"><span class="v" id="sSirop"></span><span class="k">Sucre / (sucre + eau)</span></div>
+        <div class="stat"><span class="v" id="sContr"></span><span class="k">Contraction alcool + eau</span></div>
+        <div class="stat"><span class="v" id="sSugVol"></span><span class="k">Volume pris par le sucre</span></div>
+      </div>
+
+      <div class="card">
+        <h2>Méthode</h2>
+        <ol class="method">
+          <li>Dissous le sucre dans l'eau (à chaud si besoin), puis laisse revenir à température ambiante.</li>
+          <li>Ajoute l'alcool en remuant. Le mélange chauffe un peu et se contracte, c'est normal.</li>
+          <li>Pour la précision, pèse plutôt que mesurer : les volumes dépendent de la température.</li>
+        </ol>
+        <p class="note">Après une macération, l'eau et le sucre des plantes ou des fruits changent le résultat : contrôle le degré final à l'alcoomètre.</p>
+      </div>
+      </div>
+    </div>
+
+    <div id="calc-densite" class="view split" hidden>
+      <div class="col-main view">
+      <div class="card">
+        <h2>Densité d'un alcool</h2>
+        <div class="field"><label class="lbl" for="dAbv">Titre alcoométrique</label>
+          <div class="inp"><input id="dAbv" inputmode="decimal" autocomplete="off"><span>% vol</span></div>
+          <div class="chips" id="dChips"></div></div>
+        <div class="big"><span class="v" id="dRho"></span><span class="u">g/mL</span></div>
+        <div class="stats">
+          <div class="stat"><span class="v" id="dKg"></span><span class="k">g/L</span></div>
+          <div class="stat"><span class="v" id="dMass"></span><span class="k">Alcool en masse</span></div>
+          <div class="stat"><span class="v" id="dPureG"></span><span class="k">Éthanol pur par litre</span></div>
+          <div class="stat"><span class="v" id="dLperKg"></span><span class="k">Volume d'un kilo</span></div>
+        </div>
+      </div>
+      </div>
+      <div class="col-side view">
+      <div class="card">
+        <h2>Convertir une quantité</h2>
+        <div class="amt"><div class="inp"><input id="cAmt" inputmode="decimal" autocomplete="off" aria-label="Quantité à convertir"></div>
+          <div class="seg unit" id="cUnit"><button type="button" data-v="mL">mL</button><button type="button" data-v="g">g</button></div></div>
+        <div class="big"><span class="v" id="cOut"></span><span class="u" id="cOutU"></span></div>
+        <p class="note" id="cPure"></p>
+      </div>
+      <details class="ref"><summary>Table de référence à 20 °C</summary>
+        <div style="overflow-x:auto"><table class="rt"><thead><tr><th>% vol</th><th>% masse</th><th>g/mL</th></tr></thead><tbody id="refBody"></tbody></table></div>
+      </details>
+      <p class="note">Formule internationale OIML R22 (eau-éthanol à 20 °C). L'éthanol pur pèse 0,7892 g/mL.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= RECETTES ================= -->
+  <section id="v-recettes" class="view" hidden>
+    <div class="sec-head">
+      <div class="inp search"><input id="recSearch" type="search" placeholder="Rechercher une recette" autocomplete="off" aria-label="Rechercher une recette"></div>
+      <button class="btn" id="addRec">+ Recette</button>
+    </div>
+    <div id="recList" class="rcards"></div>
+  </section>
+
+  <!-- ================= STOCK ================= -->
+  <section id="v-stock" class="view split" hidden>
+    <div class="col-main view">
+    <div class="stats" id="stockStats"></div>
+    <div class="sec-head">
+      <div class="inp search"><input id="stockSearch" type="search" placeholder="Rechercher un produit" autocomplete="off" aria-label="Rechercher un produit"></div>
+      <button class="btn" id="addRef">+ Produit</button>
+    </div>
+    <p class="note">« + » met des bouteilles en stock et déduit les consommables. « − » enregistre une sortie sans vente (dégustation, cadeau, casse…).</p>
+    <div id="refList"></div>
+    </div>
+    <div class="col-side view">
+    <div class="sec-head"><span class="sec-title">Mouvements</span><span class="note">Hors ventes</span></div>
+    <div id="refMoves"></div>
+    </div>
+  </section>
+
+  <!-- ================= CONSOMMABLES ================= -->
+  <section id="v-conso" class="view split" hidden>
+    <div class="col-main view">
+    <div class="stats" id="consoStats"></div>
+    <div class="card" id="capCard">
+      <h2>Bouteilles possibles</h2>
+      <div id="capList"></div>
+    </div>
+    <div class="sec-head">
+      <span class="sec-title">Consommables</span>
+      <button class="btn" id="addConso">+ Consommable</button>
+    </div>
+    <div id="consoList"></div>
+    </div>
+    <div class="col-side view">
+    <div class="sec-head"><span class="sec-title">Mouvements</span><span class="note">Réceptions, casse, corrections</span></div>
+    <div id="consoMoves"></div>
+    </div>
+  </section>
+
+  <!-- ================= VENTES ================= -->
+  <section id="v-ventes" class="view split" hidden>
+    <div class="col-main view">
+    <div id="salesEmpty" class="empty" hidden>
+      <span class="sec-title">Aucun produit</span>
+      <p>Ajoute d'abord tes produits dans l'onglet Stock. Ils apparaîtront ici pour encaisser en un geste.</p>
+      <button class="btn" data-go="stock">Aller au stock</button>
+    </div>
+    <div id="salesMain" class="view">
+      <div class="sec-head"><span class="sec-title">Produits</span><span class="note">Touche pour ajouter</span></div>
+      <div class="tiles" id="tiles"></div>
+    </div>
+    </div>
+    <div class="col-side view">
+      <div class="cart-empty tablet-only" id="cartEmpty"><span class="sec-title">Vente en cours</span><p class="note">Touche un produit à gauche pour commencer une vente.</p></div>
+      <div class="card sticky-side" id="cart" hidden>
+        <div class="sec-head"><h2>Vente en cours</h2><button class="btn ghost small" id="cartClear">Vider</button></div>
+        <div id="cartLines"></div>
+        <div class="field"><span class="lbl">Paiement</span>
+          <div class="seg" id="pay"><button type="button" data-v="esp">Espèces</button><button type="button" data-v="cb">Carte SumUp</button><button type="button" data-v="autre">Autre</button></div></div>
+        <div class="field"><label class="lbl" for="saleDate">Date de la vente</label>
+          <div class="inp"><input id="saleDate" type="date"></div></div>
+        <div class="cart-total"><span class="lbl">Total</span><span class="v" id="cartTotal">0,00 €</span></div>
+        <button class="btn block" id="checkout">Encaisser</button>
+      </div>
+    <div class="sec-head"><span class="sec-title">Historique</span><span class="note" id="histNote"></span></div>
+    <div id="history" class="view"></div>
+    <button class="btn ghost" id="moreHist" hidden>Voir les jours précédents</button>
+    </div>
+  </section>
+
+  <!-- ================= GRAPHIQUE ================= -->
+  <section id="v-graph" class="view split" hidden>
+    <div class="col-main view">
+    <div class="seg" id="period"><button type="button" data-v="7">7 jours</button><button type="button" data-v="30">30 jours</button><button type="button" data-v="90">90 jours</button></div>
+    <div class="stats" id="gStats"></div>
+    <div class="card">
+      <div class="sec-head"><h2>Ventes par jour</h2>
+        <div class="seg unit" id="metric"><button type="button" data-v="ca">€</button><button type="button" data-v="qty">Bouteilles</button></div></div>
+      <div class="chart-read" id="chartRead"></div>
+      <div id="chart"></div>
+      <p class="note">Barre dorée : aujourd'hui. Pointillé : moyenne par jour. Touche une barre pour voir le détail.</p>
+    </div>
+    </div>
+    <div class="col-side view">
+    <div class="card"><h2>Par produit</h2><div class="top" id="topList"></div></div>
+    <div class="card"><h2>Par paiement</h2><div class="top" id="payList"></div></div>
+    <div class="card"><h2>Sorties sans vente</h2><div class="top" id="outList"></div></div>
+    </div>
+  </section>
+</div></main>
+
+<nav class="tabs" aria-label="Onglets">
+  <button data-tab="calcul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10l-1.2 8.5a4 4 0 0 1-3.8 3.5h0a4 4 0 0 1-3.8-3.5z"/><path d="M12 15v5"/><path d="M8.5 20.5h7"/><path d="M7.6 7h8.8"/></svg>Calcul</button>
+  <button data-tab="recettes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/><path d="M9 8h6"/></svg>Recettes</button>
+  <button data-tab="stock"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h2v3.5c0 1 2 1.8 2 4V20a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-9.5c0-2.2 2-3 2-4z"/><path d="M15 6h2v2.5c0 .8 1.5 1.5 1.5 3.2V20a1 1 0 0 1-1 1H15"/></svg>Stock</button>
+  <button data-tab="conso"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l9-4 9 4-9 4z"/><path d="M3 8v8l9 4 9-4V8"/><path d="M12 12v8"/></svg>Conso.</button>
+  <button data-tab="ventes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16l-1.5 12a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1z"/><path d="M9 10V6a3 3 0 0 1 6 0v4"/></svg>Ventes</button>
+  <button data-tab="graph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16"/><path d="M7 20v-6"/><path d="M12 20V8"/><path d="M17 20v-9"/></svg>Graph.</button>
+</nav>
+
+<div class="scrim" id="scrim" hidden></div>
+<div class="sheet" id="sheet" hidden role="dialog" aria-modal="true"><div class="sheet-in" id="sheetIn"></div></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nf = (x, d) => (+x).toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d });
+const nfa = (x, max = 2) => (+x).toLocaleString('fr-FR', { maximumFractionDigits: max });
+const eur = x => nf(x, 2) + ' €';
+const num = s => { const v = parseFloat(String(s ?? '').replace(',', '.').replace(/\s/g, '')); return isFinite(v) ? v : NaN; };
+const dec = x => x === undefined || x === null || x === '' || !isFinite(x) ? '' : String(x).replace('.', ',');
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const pad = n => String(n).padStart(2, '0');
+const dayKey = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const keyToDate = k => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); };
+const todayKey = () => dayKey(new Date());
+const shortDate = ts => { const d = new Date(ts); return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}<br>${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const byName = (a, b) => a.name.localeCompare(b.name, 'fr');
+const round3 = x => Math.round(x * 1000) / 1000;
+
+// ================= Données =================
+const HAS_ANDROID = typeof window.Android !== 'undefined';
+const DEF = {
+  v: 4, refs: [], sales: [], consos: [], moves: [], recipes: [], del: {},
+  calc: { baseAbv: '96,2', targetAbv: '25', sugar: '300', sugarUnit: 'gl', basis: 'final', amount: '1', amountUnit: 'L', mode: 'recette', dAbv: '96,2', cAmt: '500', cUnit: 'mL' },
+  ui: { tab: 'calcul', period: '30', metric: 'ca', pay: 'esp' }
+};
+function readRaw() { try { return HAS_ANDROID ? Android.load() : (localStorage.getItem('eau-de-la') || ''); } catch (e) { return ''; } }
+function normalize(o) {
+  const d = JSON.parse(JSON.stringify(DEF));
+  if (!o || typeof o !== 'object') return d;
+  d.v = o.v || 1;
+  if (o.del && typeof o.del === 'object') d.del = o.del;
+  const arr = (k, ok) => { if (Array.isArray(o[k])) d[k] = o[k].filter(ok); };
+  arr('refs', r => r && r.id && r.name); arr('sales', s => s && s.id && Array.isArray(s.items));
+  arr('consos', c => c && c.id && c.name); arr('moves', m => m && m.id && m.item);
+  arr('recipes', r => r && r.id && r.name);
+  d.refs.forEach(r => { if (!Array.isArray(r.bom)) r.bom = []; });
+  d.recipes.forEach(r => { if (!Array.isArray(r.ings)) r.ings = []; });
+  Object.assign(d.calc, o.calc || {}); Object.assign(d.ui, o.ui || {});
+  if (d.ui.tab === 'liqueur') d.ui.tab = 'calcul';
+  if (o.pendingPay && o.pendingPay.id && Array.isArray(o.pendingPay.items)) d.pendingPay = o.pendingPay;
+  return d;
+}
+let D; try { D = normalize(JSON.parse(readRaw() || 'null')); } catch (e) { D = normalize(null); }
+
+// Le stock n'est plus un chiffre qu'on modifie : il est recalculé à partir de l'historique
+// (mouvements + ventes). Deux téléphones peuvent ainsi fusionner leurs ventes sans rien perdre.
+function derivedStocks() {
+  const rs = new Map(D.refs.map(r => [r.id, 0])), cs = new Map(D.consos.map(c => [c.id, 0]));
+  for (const m of D.moves) {
+    if (m.kind === 'ref') { if (rs.has(m.item)) rs.set(m.item, rs.get(m.item) + m.qty);
+      (m.uses || []).forEach(u => { if (cs.has(u.c)) cs.set(u.c, cs.get(u.c) - u.qty); }); }
+    else if (cs.has(m.item)) cs.set(m.item, cs.get(m.item) + m.qty);
+  }
+  for (const sl of D.sales) for (const i of sl.items) if (rs.has(i.ref)) rs.set(i.ref, rs.get(i.ref) - i.qty);
+  return { rs, cs };
+}
+function recompute() {
+  const { rs, cs } = derivedStocks();
+  D.refs.forEach(r => r.stock = rs.get(r.id));
+  D.consos.forEach(c => c.stock = Math.round(cs.get(c.id) * 1000) / 1000);
+}
+if (D.v < 4) {
+  // Reprise des versions précédentes : un mouvement « reprise » aligne l'historique sur le stock déjà saisi.
+  const { rs, cs } = derivedStocks(), now = Date.now();
+  D.refs.forEach(r => { const d = (r.stock || 0) - rs.get(r.id); if (Math.abs(d) > 1e-9)
+    D.moves.push({ id: 'mig' + r.id, ts: now, kind: 'ref', item: r.id, name: r.name + (r.size ? ` ${r.size} cL` : ''), qty: d, type: 'inventaire', note: 'Reprise du stock existant' }); });
+  D.consos.forEach(c => { const d = (c.stock || 0) - cs.get(c.id); if (Math.abs(d) > 1e-9)
+    D.moves.push({ id: 'mig' + c.id, ts: now, kind: 'conso', item: c.id, name: c.name, qty: Math.round(d * 1000) / 1000, type: 'inventaire', note: 'Reprise du stock existant' }); });
+  D.v = 4;
+}
+recompute();
+const tomb = id => { D.del[id] = Date.now(); };
+let saveTimer = null;
+function writeNow() { clearTimeout(saveTimer); saveTimer = null; recompute(); const s = JSON.stringify(D); try { HAS_ANDROID ? Android.save(s) : localStorage.setItem('eau-de-la', s); } catch (e) {} }
+function persist() { clearTimeout(saveTimer); saveTimer = setTimeout(writeNow, 200); }
+document.addEventListener('visibilitychange', () => { if (document.hidden && saveTimer) writeNow(); });
+
+let toastT;
+function toast(t) { const el = $('toast'); el.textContent = t; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => el.hidden = true, 2800); }
+function bindSeg(id, get, set) {
+  const el = $(id);
+  const paint = () => el.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === get())));
+  el.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; set(b.dataset.v); paint(); persist(); });
+  paint(); return paint;
+}
+function chipGroup(el, onPick) {
+  el.addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (!b) return;
+    el.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); onPick && onPick(b.dataset.v); });
+}
+const picked = el => el.querySelector('button[aria-pressed="true"]')?.dataset.v;
+
+// ================= Physique =================
+const A = [998.20123,-192.9769495,389.1238958,-1668.103923,13522.15441,-88292.78388,306287.4042,-613838.1234,747017.2998,-547846.1354,223446.0334,-39032.85426];
+const rhoP = p => { let s = 0, x = 1; for (const a of A) { s += a * x; x *= p; } return s; };
+const RHO_E = rhoP(1), RHO_W = rhoP(0);
+const abvOfP = p => p * rhoP(p) / RHO_E;
+const pOfAbv = a => { if (a <= 0) return 0; if (a >= 1) return 1; let lo = 0, hi = 1; for (let i = 0; i < 60; i++) { const m = (lo + hi) / 2; abvOfP(m) < a ? lo = m : hi = m; } return (lo + hi) / 2; };
+const vSugar = w => 0.615 + 0.019 * w; // mL/g de saccharose dissous (tables Brix, 20 °C)
+function solve1L(At, sugarVal, sugarUnit, Ab) {
+  const V = 1, mE = At * V * RHO_E;
+  let mS = sugarUnit === 'gl' ? sugarVal : sugarVal * 1000, M = 1000, mW = 0, Vh = 1, Vs = 0, w = 0;
+  for (let i = 0; i < 40; i++) {
+    Vs = mS * vSugar(w) / 1000; Vh = V - Vs;
+    if (Vh <= 0.0005) return { err: 'Trop de sucre : il ne reste plus de place pour le liquide.' };
+    const Ah = At * V / Vh;
+    if (Ah >= 1) return { err: "Trop de sucre pour ce degré : même de l'éthanol pur ne suffirait pas." };
+    const mh = Vh * rhoP(pOfAbv(Ah));
+    mW = mh - mE; M = mh + mS; w = mS / M;
+    if (sugarUnit === 'pct') mS = sugarVal * M;
+  }
+  const r = { V, mE, mS, mW, M, Vh, Vs };
+  if (At > 0) { const p0 = pOfAbv(Ab), mB = mE / p0, Vb = mB / rhoP(p0), addW = mW - (mB - mE);
+    Object.assign(r, { mB, Vb, addW, addWV: addW / RHO_W, contr: Vb + addW / RHO_W - Vh }); }
+  else Object.assign(r, { mB: 0, Vb: 0, addW: mW, addWV: mW / RHO_W, contr: 0 });
+  return r;
+}
+const fg = x => Math.abs(x) >= 10000 ? nf(x / 1000, 2) + ' kg' : nf(x, Math.abs(x) < 100 ? 1 : 0) + ' g';
+const fml = x => Math.abs(x) >= 10000 ? nf(x / 1000, 2) + ' L' : nf(x, Math.abs(x) < 100 ? 1 : 0) + ' mL';
+
+// ================= Calcul =================
+const C = D.calc;
+const CALC_IDS = ['baseAbv', 'targetAbv', 'sugar', 'amount', 'dAbv', 'cAmt'];
+function bindCalcInput(id, cb) { const el = $(id); el.value = C[id]; el.addEventListener('input', () => { C[id] = el.value; persist(); cb(); }); }
+function renderLiq() {
+  const Ab = num(C.baseAbv) / 100, At = num(C.targetAbv) / 100, sv = num(C.sugar), amt = num(C.amount);
+  const sugarVal = C.sugarUnit === 'pct' ? sv / 100 : sv;
+  const msg = $('liqMsg'), rec = $('recipeCalc');
+  const fail = t => { msg.textContent = t; msg.hidden = false; rec.style.opacity = .35;
+    document.querySelectorAll('#calc-recette .stat .v').forEach(e => e.textContent = '—');
+    ['rAlcG','rAlcV','rWatG','rWatV','rSugG'].forEach(i => $(i).textContent = '—'); $('recipeSub').textContent = ''; };
+  $('baseName').textContent = isFinite(Ab) ? `Alcool ${nfa(Ab * 100, 1)} %` : 'Alcool';
+  if (![Ab, At, sv, amt].every(isFinite)) return fail('Remplis tous les champs avec des nombres.');
+  if (Ab <= 0 || Ab > 1) return fail("Le degré de l'alcool de base doit être entre 0 et 100 % vol.");
+  if (At < 0 || At >= 1) return fail('Le degré visé doit être entre 0 et 100 % vol.');
+  if (sv < 0 || (C.sugarUnit === 'pct' && sv >= 100)) return fail('Quantité de sucre invalide.');
+  if (amt <= 0) return fail('Indique une quantité supérieure à zéro.');
+  if (At >= Ab) return fail("Le degré visé doit être plus bas que celui de l'alcool de base.");
+  if (C.basis === 'base' && At === 0) return fail('Sans alcool dans la cible, choisis « Liqueur voulue ».');
+  const r = solve1L(At, sugarVal, C.sugarUnit, Ab);
+  if (r.err) return fail(r.err);
+  if (r.addW < -0.01) return fail(`Ton alcool à ${nfa(Ab * 100, 1)} % contient déjà trop d'eau pour atteindre ${nfa(At * 100, 1)} % avec ce sucre. Monte le degré de base ou baisse le degré visé.`);
+  let k;
+  if (C.basis === 'final') k = C.amountUnit === 'L' ? amt : amt * 1000 / r.M;
+  else k = C.amountUnit === 'L' ? amt / r.Vb : amt * 1000 / r.mB;
+  msg.hidden = true; rec.style.opacity = 1;
+  const satur = r.mS / (r.mS + r.mW);
+  if (satur > 0.66) { msg.textContent = `Le sucre fait ${nf(satur * 100, 0)} % du sirop (sucre + eau) : au-delà de la saturation (~67 %), il risque de ne pas se dissoudre ou de cristalliser.`; msg.hidden = false; }
+  $('rAlcG').textContent = fg(r.mB * k); $('rAlcV').textContent = fml(r.Vb * 1000 * k);
+  $('rWatG').textContent = fg(Math.max(0, r.addW) * k); $('rWatV').textContent = fml(Math.max(0, r.addWV) * 1000 * k);
+  $('rSugG').textContent = fg(r.mS * k);
+  $('recipeSub').textContent = `${fml(1000 * k)} à ${nfa(At * 100, 1)} % vol`;
+  const fe = r.mE / r.M, fw = r.mW / r.M, fs = r.mS / r.M;
+  $('bE').style.width = fe * 100 + '%'; $('bW').style.width = fw * 100 + '%'; $('bS').style.width = fs * 100 + '%';
+  $('lE').textContent = nf(fe * 100, 1) + ' %'; $('lW').textContent = nf(fw * 100, 1) + ' %'; $('lS').textContent = nf(fs * 100, 1) + ' %';
+  $('sVol').textContent = fml(1000 * k); $('sMass').textContent = fg(r.M * k);
+  $('sDens').textContent = nf(r.M / 1000, 4) + ' g/mL'; $('sMassAbv').textContent = nf(fe * 100, 2) + ' %';
+  if (C.sugarUnit === 'gl') { $('sSugar').textContent = nf(fs * 100, 1) + ' %'; $('sSugarK').textContent = 'Sucre en masse'; }
+  else { $('sSugar').textContent = nf(r.mS, 0) + ' g/L'; $('sSugarK').textContent = 'Sucre par litre'; }
+  $('sSirop').textContent = nf(satur * 100, 1) + ' %';
+  $('sContr').textContent = '− ' + fml(r.contr * 1000 * k);
+  $('sSugVol').textContent = fml(r.Vs * 1000 * k);
+}
+const CHIPS = [40, 45, 50, 70, 90, 95, 96, 96.2];
+$('dChips').innerHTML = CHIPS.map(c => `<button type="button" data-v="${c}">${nfa(c, 1)} %</button>`).join('');
+$('dChips').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; C.dAbv = nfa(+b.dataset.v, 1); $('dAbv').value = C.dAbv; persist(); renderDens(); });
+function renderDens() {
+  const a = num(C.dAbv) / 100;
+  $('dChips').querySelectorAll('button').forEach(b => b.classList.toggle('on', Math.abs(+b.dataset.v / 100 - a) < 1e-9));
+  const ok = isFinite(a) && a >= 0 && a <= 1, p = ok ? pOfAbv(a) : NaN, rho = ok ? rhoP(p) : NaN;
+  $('dRho').textContent = ok ? nf(rho / 1000, 4) : '—';
+  $('dKg').textContent = ok ? nf(rho, 2) : '—';
+  $('dMass').textContent = ok ? nf(p * 100, 2) + ' %' : '—';
+  $('dPureG').textContent = ok ? nf(a * RHO_E, 1) + ' g' : '—';
+  $('dLperKg').textContent = ok ? nf(1e6 / rho, 1) + ' mL' : '—';
+  const q = num(C.cAmt);
+  if (!ok || !isFinite(q) || q < 0) { $('cOut').textContent = '—'; $('cOutU').textContent = ''; $('cPure').textContent = ''; return; }
+  if (C.cUnit === 'mL') { const m = q * rho / 1000; $('cOut').textContent = nf(m, m < 100 ? 2 : 1); $('cOutU').textContent = 'g';
+    $('cPure').innerHTML = `Contient <b>${nf(q * a, 1)} mL</b> soit <b>${nf(q * a * RHO_E / 1000, 1)} g</b> d'éthanol pur.`; }
+  else { const v = q / rho * 1000; $('cOut').textContent = nf(v, v < 100 ? 2 : 1); $('cOutU').textContent = 'mL';
+    $('cPure').innerHTML = `Contient <b>${nf(q * p, 1)} g</b> soit <b>${nf(q * p / RHO_E * 1000, 1)} mL</b> d'éthanol pur.`; }
+}
+(() => { const refs = []; for (let v = 0; v <= 95; v += 5) refs.push(v); refs.push(96, 96.2, 100);
+  $('refBody').innerHTML = refs.map(v => { const p = pOfAbv(v / 100); return `<tr${v === 96.2 ? ' class="hl"' : ''}><td>${nfa(v, 1)}</td><td>${nf(p * 100, 2)}</td><td>${nf(rhoP(p) / 1000, 4)}</td></tr>`; }).join(''); })();
+['baseAbv', 'targetAbv', 'sugar', 'amount'].forEach(id => bindCalcInput(id, renderLiq));
+const paintSugarUnit = bindSeg('sugarUnit', () => C.sugarUnit, v => { C.sugarUnit = v; renderLiq(); });
+const paintBasis = bindSeg('basis', () => C.basis, v => { C.basis = v; renderLiq(); });
+const paintAmountUnit = bindSeg('amountUnit', () => C.amountUnit, v => { C.amountUnit = v; renderLiq(); });
+['dAbv', 'cAmt'].forEach(id => bindCalcInput(id, renderDens));
+bindSeg('cUnit', () => C.cUnit, v => { C.cUnit = v; renderDens(); });
+const paintMode = () => { $('calc-recette').hidden = C.mode !== 'recette'; $('calc-densite').hidden = C.mode !== 'densite'; };
+const paintModeSeg = bindSeg('calcMode', () => C.mode, v => { C.mode = v; paintMode(); });
+paintMode();
+
+// ================= Feuille (fenêtre du bas) =================
+let sheetClose = null;
+function openSheet(html, onClose) {
+  $('sheetIn').innerHTML = '<div class="grab"></div>' + html;
+  $('scrim').hidden = false; $('sheet').hidden = false; $('sheet').scrollTop = 0; sheetClose = onClose || null;
+}
+function closeSheet() { $('scrim').hidden = true; $('sheet').hidden = true; $('sheetIn').innerHTML = ''; const f = sheetClose; sheetClose = null; if (f) f(); }
+$('scrim').addEventListener('click', closeSheet);
+window.androidBack = () => {
+  if (!$('sheet').hidden) { closeSheet(); return true; }
+  if (D.ui.tab !== 'calcul') { setTab('calcul'); return true; }
+  return false;
+};
+const sheetErr = t => { const e = $('fErr'); if (e) { e.textContent = t; e.hidden = false; e.scrollIntoView({ block: 'nearest' }); } };
+
+// ================= Mouvements =================
+// kind 'ref' = produit fini, 'conso' = consommable ; qty = variation signée.
+const REASONS_REF = { degustation: 'Dégustation', cadeau: 'Cadeau', casse: 'Casse', autre: 'Autre' };
+const REASONS_CONSO = { casse: 'Casse', perte: 'Perte', autre: 'Autre' };
+const MOVE_TYPES = { prod: 'Mise en bouteille', sortie: 'Sortie', inventaire: "Correction d'inventaire", reception: 'Réception' };
+const refById = id => D.refs.find(r => r.id === id);
+const consoById = id => D.consos.find(c => c.id === id);
+const refLabel = r => r.name + (r.size ? ` ${nfa(r.size, 1)} cL` : '');
+function addMove(m) { const mv = { id: uid(), ts: Date.now(), ...m }; D.moves.push(mv); return mv; }
+function bomUses(r, n) { return (r.bom || []).filter(b => consoById(b.c)).map(b => ({ c: b.c, name: consoById(b.c).name, qty: n * b.q / (b.per || 1) })); }
+function capacity(r) {
+  const bom = (r.bom || []).filter(b => consoById(b.c) && b.q > 0);
+  if (!bom.length) return null;
+  let best = Infinity, lim = null;
+  for (const b of bom) { const c = consoById(b.c), n = Math.floor(Math.max(0, c.stock) / (b.q / (b.per || 1)) + 1e-9); if (n < best) { best = n; lim = c; } }
+  return { n: best, lim };
+}
+function undoMove(mv) { tomb(mv.id); D.moves = D.moves.filter(x => x.id !== mv.id); }
+function movesHtml(kind) {
+  const list = D.moves.filter(m => m.kind === kind).sort((a, b) => b.ts - a.ts).slice(0, 25);
+  if (!list.length) return `<p class="note">Aucun mouvement pour l'instant.</p>`;
+  const reasons = kind === 'ref' ? REASONS_REF : REASONS_CONSO;
+  return `<div class="list">${list.map(m => {
+    let sub = m.type === 'sortie' ? 'Sortie · ' + (reasons[m.reason] || 'Autre') : (MOVE_TYPES[m.type] || '');
+    if (m.note) sub += ' · ' + esc(m.note);
+    if (m.uses && m.uses.length) sub += '<br>Consommé : ' + m.uses.map(u => `${nfa(u.qty)} ${esc(u.name)}`).join(', ');
+    return `<div class="mv" data-mv="${m.id}"><span class="md">${shortDate(m.ts)}</span>
+      <div class="mi">${esc(m.name)}<small>${sub}</small></div>
+      <div style="text-align:right"><div class="mq ${m.qty >= 0 ? 'plus' : 'minus'}">${m.qty > 0 ? '+' : '−'}${nfa(Math.abs(m.qty))}</div><button class="del" data-act="undo">Annuler</button></div></div>`; }).join('')}</div>`;
+}
+function bindMoves(containerId) {
+  $(containerId).addEventListener('click', e => {
+    const b = e.target.closest('[data-act]'); if (!b) return;
+    const row = b.closest('[data-mv]'); const mv = D.moves.find(x => x.id === row.dataset.mv); if (!mv) return;
+    if (b.dataset.act === 'undo') {
+      if (row.nextElementSibling?.classList.contains('confirm')) return;
+      const what = mv.uses?.length ? 'Le stock et les consommables seront remis comme avant.' : 'Le stock sera remis comme avant.';
+      row.insertAdjacentHTML('afterend', `<div class="confirm" data-mv="${mv.id}">Annuler ce mouvement ? ${what}
+        <button class="btn danger" data-act="undoYes">Annuler le mouvement</button><button class="btn ghost" data-act="undoNo">Garder</button></div>`);
+    } else if (b.dataset.act === 'undoNo') row.remove();
+    else if (b.dataset.act === 'undoYes') { undoMove(mv); writeNow(); renderAll(); toast('Mouvement annulé'); }
+  });
+}
+bindMoves('refMoves'); bindMoves('consoMoves');
+
+// ================= Stock (produits finis) =================
+let stockQuery = '';
+$('stockSearch').addEventListener('input', e => { stockQuery = e.target.value.trim().toLowerCase(); renderStock(); });
+const stockPill = (stock, alert) => stock <= 0 ? '<span class="pill out">Épuisé</span>' : (alert > 0 && stock <= alert ? '<span class="pill low">Stock bas</span>' : '');
+function renderStock() {
+  const refs = D.refs, units = refs.reduce((s, r) => s + Math.max(0, r.stock), 0);
+  const value = refs.reduce((s, r) => s + Math.max(0, r.stock) * (r.price || 0), 0);
+  const low = refs.filter(r => r.stock <= 0 || (r.alert > 0 && r.stock <= r.alert)).length;
+  $('stockStats').innerHTML = `
+    <div class="stat"><span class="v">${refs.length}</span><span class="k">Produits</span></div>
+    <div class="stat"><span class="v">${nf(units, 0)}</span><span class="k">Bouteilles en stock</span></div>
+    <div class="stat"><span class="v">${eur(value)}</span><span class="k">Valeur au prix de vente</span></div>
+    <div class="stat"><span class="v" style="color:${low ? 'var(--gold)' : 'inherit'}">${low}</span><span class="k">À remettre en bouteille</span></div>`;
+  const list = $('refList');
+  if (!refs.length) {
+    list.innerHTML = `<div class="empty"><span class="sec-title">Ton stock est vide</span><p>Ajoute ton premier produit, par exemple L'Élixir de Verveine en 50 cL, avec son prix et sa composition en consommables.</p><button class="btn" data-act="add">+ Ajouter un produit</button></div>`;
+  } else {
+    const shown = refs.filter(r => !stockQuery || r.name.toLowerCase().includes(stockQuery)).sort(byName);
+    list.innerHTML = !shown.length ? `<p class="note">Aucun produit ne correspond à « ${esc(stockQuery)} ».</p>` : `<div class="list">${shown.map(r => {
+      const meta = [r.size ? nfa(r.size, 1) + ' cL' : '', r.abv ? nfa(r.abv, 1) + ' % vol' : '', r.price ? eur(r.price) : ''].filter(Boolean).join(' · ');
+      const cap = capacity(r);
+      return `<div class="row" data-id="${r.id}">
+        <button class="row-main" data-act="edit"><span class="row-name">${esc(r.name)}</span><span class="row-meta">${meta}${stockPill(r.stock, r.alert)}</span>
+          ${cap ? `<span class="row-meta">Consommables pour ${cap.n} bouteille${cap.n > 1 ? 's' : ''}</span>` : ''}</button>
+        <div class="qty"><button data-act="out" aria-label="Sortie de stock">−</button><span class="n${r.stock <= 0 ? ' out' : ''}">${r.stock}</span><button data-act="in" aria-label="Mise en stock">+</button></div>
+      </div>`; }).join('')}</div>`;
+  }
+  $('refMoves').innerHTML = movesHtml('ref');
+}
+$('refList').addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  if (b.dataset.act === 'add') return openRefSheet(null);
+  const r = refById(b.closest('[data-id]').dataset.id); if (!r) return;
+  if (b.dataset.act === 'edit') openRefSheet(r);
+  else if (b.dataset.act === 'in') openProdSheet(r);
+  else if (b.dataset.act === 'out') openOutSheet(r);
+});
+$('addRef').addEventListener('click', () => openRefSheet(null));
+
+// ---- Mise en bouteille (+) ----
+function openProdSheet(r) {
+  openSheet(`
+    <span class="sec-title">Mise en stock</span>
+    <p class="note"><b>${esc(refLabel(r))}</b> · en stock : ${r.stock}</p>
+    <div class="field"><span class="lbl">Type d'entrée</span>
+      <div class="seg" id="pType"><button type="button" data-v="prod" aria-pressed="true">Mise en bouteille</button><button type="button" data-v="inventaire" aria-pressed="false">Correction</button></div></div>
+    <div class="field"><label class="lbl" for="pQty">Nombre de bouteilles</label>
+      <div class="inp"><input id="pQty" inputmode="numeric" placeholder="0" autocomplete="off"><span>bout.</span></div>
+      <div class="chips" id="pChips">${[1, 6, 12, 24, 48].map(n => `<button type="button" data-n="${n}">+${n}</button>`).join('')}</div></div>
+    <div id="pUses"></div>
+    <div class="msg" id="fErr" hidden></div>
+    <div class="sheet-actions"><button class="btn ghost" id="pCancel">Annuler</button><button class="btn" id="pSave">Ajouter au stock</button></div>`);
+  let type = 'prod';
+  const paint = () => {
+    const n = Math.round(num($('pQty').value)) || 0, z = $('pUses');
+    if (type !== 'prod') { z.innerHTML = `<p class="note">Une correction ajuste seulement le compte de bouteilles, sans toucher aux consommables.</p>`; return; }
+    if (!(r.bom || []).length) { z.innerHTML = `<p class="note">Ce produit n'a pas encore de composition : aucun consommable ne sera déduit. Ajoute-la en touchant le nom du produit dans la liste.</p>`; return; }
+    const uses = bomUses(r, n);
+    z.innerHTML = `<div class="field"><span class="lbl">Consommables utilisés</span><div class="uses">${uses.map(u => { const after = consoById(u.c).stock - u.qty;
+      return `<div><span>${esc(u.name)}</span><span>${nfa(u.qty)} · reste <span class="${after < 0 ? 'warn' : ''}">${nfa(after)}</span></span></div>`; }).join('')}</div></div>
+      ${uses.some(u => consoById(u.c).stock - u.qty < 0) ? '<p class="note warn">Certains consommables passeront en négatif : vérifie ton stock de consommables.</p>' : ''}`;
+  };
+  chipGroup($('pType'), v => { type = v; paint(); });
+  $('pQty').addEventListener('input', paint);
+  $('pChips').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $('pQty').value = (Math.round(num($('pQty').value)) || 0) + +b.dataset.n; paint(); });
+  paint();
+  $('pCancel').onclick = closeSheet;
+  $('pSave').onclick = () => {
+    const n = Math.round(num($('pQty').value));
+    if (!(n > 0)) return sheetErr('Indique un nombre de bouteilles supérieur à zéro.');
+    const uses = type === 'prod' ? bomUses(r, n) : [];
+    addMove({ kind: 'ref', item: r.id, name: refLabel(r), qty: n, type, uses: uses.map(u => ({ c: u.c, name: u.name, qty: round3(u.qty) })) });
+    writeNow(); closeSheet(); renderAll();
+    toast(type === 'prod' ? `${n} bouteille${n > 1 ? 's' : ''} en stock${uses.length ? ', consommables déduits' : ''}` : 'Stock corrigé');
+  };
+}
+
+// ---- Sortie sans vente (−) ----
+function openOutSheet(r) {
+  openSheet(`
+    <span class="sec-title">Sortie de stock</span>
+    <p class="note"><b>${esc(refLabel(r))}</b> · en stock : ${r.stock}</p>
+    <div class="field"><span class="lbl">Motif</span>
+      <div class="chips" id="oReason">${Object.entries(REASONS_REF).map(([k, v], i) => `<button type="button" data-v="${k}" aria-pressed="${i === 0}">${v}</button>`).join('')}<button type="button" data-v="inventaire" aria-pressed="false">Correction d'inventaire</button></div></div>
+    <div class="field"><label class="lbl" for="oQty">Nombre de bouteilles</label>
+      <div class="qty" style="gap:8px"><button type="button" id="oMinus" aria-label="Moins">−</button><div class="inp" style="width:90px"><input id="oQty" inputmode="numeric" value="1" style="text-align:center"></div><button type="button" id="oPlus" aria-label="Plus">+</button></div></div>
+    <div class="field"><label class="lbl" for="oNote">Précision (facultatif)</label>
+      <div class="inp"><input id="oNote" placeholder="Salon, client, bouteille fêlée…" autocomplete="off"></div></div>
+    <div class="msg" id="fErr" hidden></div>
+    <div class="sheet-actions"><button class="btn ghost" id="oCancel">Annuler</button><button class="btn" id="oSave">Retirer du stock</button></div>`);
+  chipGroup($('oReason'));
+  const q = () => Math.round(num($('oQty').value)) || 0;
+  $('oMinus').onclick = () => $('oQty').value = Math.max(1, q() - 1);
+  $('oPlus').onclick = () => $('oQty').value = q() + 1;
+  $('oCancel').onclick = closeSheet;
+  $('oSave').onclick = () => {
+    const n = q(), reason = picked($('oReason'));
+    if (!(n > 0)) return sheetErr('Indique un nombre de bouteilles supérieur à zéro.');
+    if (n > r.stock) return sheetErr(`Il n'y a que ${r.stock} bouteille${r.stock > 1 ? 's' : ''} en stock.`);
+    const type = reason === 'inventaire' ? 'inventaire' : 'sortie';
+    addMove({ kind: 'ref', item: r.id, name: refLabel(r), qty: -n, type, reason: type === 'sortie' ? reason : undefined, note: $('oNote').value.trim() || undefined });
+    writeNow(); closeSheet(); renderAll();
+    toast(type === 'sortie' ? `${n} bouteille${n > 1 ? 's' : ''} sortie${n > 1 ? 's' : ''} · ${REASONS_REF[reason]}` : 'Stock corrigé');
+  };
+}
+
+// ---- Fiche produit avec composition ----
+function bomRowHtml(b) {
+  const opts = [...D.consos].sort(byName).map(c => `<option value="${c.id}"${b && b.c === c.id ? ' selected' : ''}>${esc(c.name)}</option>`).join('');
+  return `<div class="bom-row"><select aria-label="Consommable">${opts}</select>
+    <input inputmode="decimal" value="${b ? dec(b.q) : '1'}" aria-label="Quantité"><span class="per">pour</span>
+    <input inputmode="numeric" value="${b ? (b.per || 1) : '1'}" aria-label="Nombre de bouteilles"><button type="button" class="x" data-act="rm" aria-label="Retirer">×</button></div>`;
+}
+function openRefSheet(r) {
+  const hasConsos = D.consos.length > 0;
+  openSheet(`
+    <span class="sec-title">${r ? 'Modifier le produit' : 'Nouveau produit'}</span>
+    <div class="field"><label class="lbl" for="fName">Nom du produit</label><div class="inp"><input id="fName" value="${r ? esc(r.name) : ''}" placeholder="L'Élixir de Verveine" autocomplete="off"></div></div>
+    <div class="row2">
+      <div class="field"><label class="lbl" for="fSize">Contenance</label><div class="inp"><input id="fSize" inputmode="decimal" value="${r ? dec(r.size) : ''}" placeholder="50"><span>cL</span></div></div>
+      <div class="field"><label class="lbl" for="fAbv">Degré</label><div class="inp"><input id="fAbv" inputmode="decimal" value="${r ? dec(r.abv) : ''}" placeholder="—"><span>% vol</span></div></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label class="lbl" for="fPrice">Prix de vente</label><div class="inp"><input id="fPrice" inputmode="decimal" value="${r ? dec(r.price) : ''}" placeholder="0,00"><span>€</span></div></div>
+      <div class="field"><label class="lbl" for="fStock">Stock</label><div class="inp"><input id="fStock" inputmode="numeric" value="${r ? r.stock : '0'}" placeholder="0"><span>bout.</span></div></div>
+    </div>
+    <div class="field"><label class="lbl" for="fAlert">Prévenir quand il reste</label><div class="inp"><input id="fAlert" inputmode="numeric" value="${r ? dec(r.alert) : '5'}" placeholder="0"><span>bouteilles ou moins</span></div></div>
+    <div class="field"><span class="lbl">Composition d'une bouteille</span>
+      ${hasConsos ? `<div class="bom" id="bom">${(r?.bom || []).filter(b => consoById(b.c)).map(bomRowHtml).join('')}</div>
+        <button type="button" class="link" id="bomAdd" style="align-self:flex-start">+ Ajouter un consommable</button>
+        <p class="note">Exemple : 1 bouteille pour 1, 1 bouchon pour 1, 1 étiquette pour 1, 1 capsule pour 1, 1 carton pour 6. Ces quantités sont déduites à chaque mise en bouteille.</p>`
+      : `<p class="note">Crée d'abord tes consommables (bouteilles, bouchons, étiquettes, capsules, cartons) dans l'onglet Conso. pour décrire la composition de ce produit.</p>`}
+    </div>
+    <div class="msg" id="fErr" hidden></div>
+    <div class="sheet-actions"><button class="btn ghost" id="fCancel">Annuler</button><button class="btn" id="fSave">Enregistrer</button></div>
+    ${r ? `<div id="fDelZone"><button class="btn danger-ghost block" id="fDel">Supprimer ce produit</button></div>` : ''}`);
+  if (hasConsos) {
+    $('bomAdd').onclick = () => $('bom').insertAdjacentHTML('beforeend', bomRowHtml(null));
+    $('bom').addEventListener('click', e => { if (e.target.closest('[data-act="rm"]')) e.target.closest('.bom-row').remove(); });
+  }
+  $('fCancel').onclick = closeSheet;
+  $('fSave').onclick = () => {
+    const name = $('fName').value.trim();
+    const size = num($('fSize').value), abv = num($('fAbv').value), price = num($('fPrice').value);
+    const stock = Math.round(num($('fStock').value)), alert = Math.round(num($('fAlert').value));
+    if (!name) return sheetErr('Donne un nom au produit.');
+    if ($('fPrice').value.trim() && !(price >= 0)) return sheetErr('Le prix doit être un nombre, par exemple 29,50.');
+    if ($('fStock').value.trim() && !(stock >= 0)) return sheetErr('Le stock doit être un nombre entier positif.');
+    const bom = [];
+    if (hasConsos) for (const row of $('bom').querySelectorAll('.bom-row')) {
+      const [sel, q, per] = row.querySelectorAll('select,input'); const qq = num(q.value), pp = Math.round(num(per.value));
+      if (!(qq > 0) || !(pp > 0)) return sheetErr('Chaque ligne de composition doit avoir une quantité et un nombre de bouteilles supérieurs à zéro.');
+      const ex = bom.find(b => b.c === sel.value);
+      if (ex) { ex.q = round3(ex.q + qq * ex.per / pp); continue; }
+      bom.push({ c: sel.value, q: qq, per: pp });
+    }
+    const data = { name, size: size > 0 ? size : null, abv: abv > 0 ? abv : null, price: price >= 0 ? price : 0, alert: alert >= 0 ? alert : 0, bom, upd: Date.now() };
+    const newStock = stock >= 0 ? stock : 0;
+    if (r) { const delta = newStock - r.stock; Object.assign(r, data);
+      if (delta) addMove({ kind: 'ref', item: r.id, name: refLabel(r), qty: delta, type: 'inventaire' }); }
+    else { const nr = { id: uid(), ...data, stock: 0 }; D.refs.push(nr);
+      if (newStock) addMove({ kind: 'ref', item: nr.id, name: refLabel(nr), qty: newStock, type: 'inventaire', note: 'Stock initial' }); }
+    writeNow(); closeSheet(); renderAll(); toast(r ? 'Produit mis à jour' : 'Produit ajouté');
+  };
+  if (r) $('fDel').onclick = () => {
+    $('fDelZone').innerHTML = `<div class="confirm round">Supprimer « ${esc(r.name)} » ? Les ventes et mouvements passés restent dans l'historique.
+      <button class="btn danger" id="fDelYes">Supprimer</button><button class="btn ghost" id="fDelNo">Garder</button></div>`;
+    $('fDelNo').onclick = () => openRefSheet(r);
+    $('fDelYes').onclick = () => { tomb(r.id); D.refs = D.refs.filter(x => x.id !== r.id); delete cart[r.id]; writeNow(); closeSheet(); renderAll(); toast('Produit supprimé'); };
+  };
+}
+
+// ================= Consommables =================
+const CATS = { bouteille: 'Bouteilles', bouchon: 'Bouchons', etiquette: 'Étiquettes', capsule: 'Capsules', carton: 'Cartons', autre: 'Autres' };
+const CAT1 = { bouteille: 'Bouteille', bouchon: 'Bouchon', etiquette: 'Étiquette', capsule: 'Capsule', carton: 'Carton', autre: 'Autre' };
+function renderConso() {
+  const cs = D.consos, low = cs.filter(c => c.stock <= 0 || (c.alert > 0 && c.stock <= c.alert)).length;
+  const withBom = D.refs.filter(r => capacity(r));
+  $('consoStats').innerHTML = `
+    <div class="stat"><span class="v">${cs.length}</span><span class="k">Consommables</span></div>
+    <div class="stat"><span class="v" style="color:${low ? 'var(--gold)' : 'inherit'}">${low}</span><span class="k">À commander</span></div>`;
+  $('capCard').hidden = !D.refs.length || !cs.length;
+  $('capList').innerHTML = !withBom.length
+    ? `<p class="note">Indique la composition de tes produits (touche un produit dans l'onglet Stock) pour voir combien de bouteilles tu peux encore préparer.</p>`
+    : [...withBom].sort(byName).map(r => { const cap = capacity(r);
+      return `<div class="cap-row"><span class="row-name">${esc(refLabel(r))}</span><span class="cv">${cap.n}</span><small>Limité par : ${esc(cap.lim.name)} (${nfa(cap.lim.stock)} en stock)</small></div>`; }).join('');
+  const list = $('consoList');
+  if (!cs.length) {
+    list.innerHTML = `<div class="empty"><span class="sec-title">Aucun consommable</span><p>Ajoute tes bouteilles vides, bouchons, étiquettes, capsules thermorétractables et cartons. Ils seront déduits automatiquement à chaque mise en bouteille.</p><button class="btn" data-act="add">+ Ajouter un consommable</button></div>`;
+  } else {
+    const usedBy = id => D.refs.filter(r => (r.bom || []).some(b => b.c === id)).map(r => r.name);
+    list.innerHTML = '<div class="view">' + Object.keys(CATS).map(cat => { const items = cs.filter(c => (c.cat || 'autre') === cat).sort(byName); if (!items.length) return '';
+      return `<div class="list"><div class="list-cap"><span>${CATS[cat]}</span><span>${items.length}</span></div>${items.map(c => { const u = usedBy(c.id);
+        return `<div class="row" data-id="${c.id}">
+          <button class="row-main" data-act="edit"><span class="row-name">${esc(c.name)}</span>
+            <span class="row-meta">${u.length ? 'Pour : ' + esc(u.join(', ')) : 'Utilisé par aucun produit'}${stockPill(c.stock, c.alert)}</span></button>
+          <div class="qty"><button data-act="out" aria-label="Sortie">−</button><span class="n${c.stock <= 0 ? ' out' : ''}">${nfa(c.stock, 1)}</span><button data-act="in" aria-label="Réception">+</button></div>
+        </div>`; }).join('')}</div>`; }).join('') + '</div>';
+  }
+  $('consoMoves').innerHTML = movesHtml('conso');
+}
+$('consoList').addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  if (b.dataset.act === 'add') return openConsoSheet(null);
+  const c = consoById(b.closest('[data-id]').dataset.id); if (!c) return;
+  if (b.dataset.act === 'edit') openConsoSheet(c); else openConsoMoveSheet(c, b.dataset.act);
+});
+$('addConso').addEventListener('click', () => openConsoSheet(null));
+function openConsoMoveSheet(c, dir) {
+  const inn = dir === 'in';
+  openSheet(`
+    <span class="sec-title">${inn ? 'Réception' : 'Sortie de consommable'}</span>
+    <p class="note"><b>${esc(c.name)}</b> · en stock : ${nfa(c.stock)}</p>
+    <div class="field"><span class="lbl">Motif</span><div class="chips" id="cReason">
+      ${inn ? `<button type="button" data-v="reception" aria-pressed="true">Réception de commande</button><button type="button" data-v="inventaire" aria-pressed="false">Correction</button>`
+            : Object.entries(REASONS_CONSO).map(([k, v], i) => `<button type="button" data-v="${k}" aria-pressed="${i === 0}">${v}</button>`).join('') + `<button type="button" data-v="inventaire" aria-pressed="false">Correction</button>`}
+    </div></div>
+    <div class="field"><label class="lbl" for="cQty">Quantité</label>
+      <div class="inp"><input id="cQty" inputmode="decimal" placeholder="0" autocomplete="off"><span>pièces</span></div>
+      ${inn ? `<div class="chips" id="cChips">${[50, 100, 250, 500, 1000].map(n => `<button type="button" data-n="${n}">+${n}</button>`).join('')}</div>` : ''}</div>
+    <div class="field"><label class="lbl" for="cNote">Précision (facultatif)</label><div class="inp"><input id="cNote" placeholder="${inn ? 'Fournisseur, n° de commande…' : 'Lot abîmé…'}" autocomplete="off"></div></div>
+    <div class="msg" id="fErr" hidden></div>
+    <div class="sheet-actions"><button class="btn ghost" id="cCancel">Annuler</button><button class="btn" id="cSave">${inn ? 'Ajouter au stock' : 'Retirer du stock'}</button></div>`);
+  chipGroup($('cReason'));
+  if (inn) $('cChips').addEventListener('click', e => { const b = e.target.closest('button'); if (b) $('cQty').value = nfa((num($('cQty').value) || 0) + +b.dataset.n); });
+  $('cCancel').onclick = closeSheet;
+  $('cSave').onclick = () => {
+    const q = num($('cQty').value), reason = picked($('cReason'));
+    if (!(q > 0)) return sheetErr('Indique une quantité supérieure à zéro.');
+    const delta = inn ? q : -q;
+    const type = reason === 'inventaire' ? 'inventaire' : (inn ? 'reception' : 'sortie');
+    addMove({ kind: 'conso', item: c.id, name: c.name, qty: delta, type, reason: type === 'sortie' ? reason : undefined, note: $('cNote').value.trim() || undefined });
+    writeNow(); closeSheet(); renderAll(); toast(`${inn ? '+' : '−'}${nfa(q)} · ${c.name}`);
+  };
+}
+function openConsoSheet(c) {
+  openSheet(`
+    <span class="sec-title">${c ? 'Modifier le consommable' : 'Nouveau consommable'}</span>
+    <div class="field"><span class="lbl">Type</span><div class="chips" id="kCat">${Object.entries(CAT1).map(([k, v]) => `<button type="button" data-v="${k}" aria-pressed="${(c?.cat || 'bouteille') === k}">${v}</button>`).join('')}</div></div>
+    <div class="field"><label class="lbl" for="kName">Nom</label><div class="inp"><input id="kName" value="${c ? esc(c.name) : ''}" placeholder="Bouteille 50 cL" autocomplete="off"></div></div>
+    <div class="row2">
+      <div class="field"><label class="lbl" for="kStock">Stock</label><div class="inp"><input id="kStock" inputmode="decimal" value="${c ? dec(c.stock) : '0'}"><span>pièces</span></div></div>
+      <div class="field"><label class="lbl" for="kAlert">Alerte à</label><div class="inp"><input id="kAlert" inputmode="decimal" value="${c ? dec(c.alert) : ''}" placeholder="0"><span>ou moins</span></div></div>
+    </div>
+    <div class="msg" id="fErr" hidden></div>
+    <div class="sheet-actions"><button class="btn ghost" id="kCancel">Annuler</button><button class="btn" id="kSave">Enregistrer</button></div>
+    ${c ? `<div id="kDelZone"><button class="btn danger-ghost block" id="kDel">Supprimer ce consommable</button></div>` : ''}`);
+  chipGroup($('kCat'));
+  $('kCancel').onclick = closeSheet;
+  $('kSave').onclick = () => {
+    const name = $('kName').value.trim(), stock = num($('kStock').value), alert = num($('kAlert').value);
+    if (!name) return sheetErr('Donne un nom au consommable.');
+    if ($('kStock').value.trim() && !(stock >= 0)) return sheetErr('Le stock doit être un nombre positif.');
+    const data = { name, cat: picked($('kCat')) || 'autre', alert: alert >= 0 ? alert : 0, upd: Date.now() };
+    const ns = stock >= 0 ? round3(stock) : 0;
+    if (c) { const delta = round3(ns - c.stock); Object.assign(c, data);
+      if (delta) addMove({ kind: 'conso', item: c.id, name: c.name, qty: delta, type: 'inventaire' }); }
+    else { const nc = { id: uid(), ...data, stock: 0 }; D.consos.push(nc);
+      if (ns) addMove({ kind: 'conso', item: nc.id, name: nc.name, qty: ns, type: 'inventaire', note: 'Stock initial' }); }
+    writeNow(); closeSheet(); renderAll(); toast(c ? 'Consommable mis à jour' : 'Consommable ajouté');
+  };
+  if (c) $('kDel').onclick = () => {
+    const used = D.refs.filter(r => (r.bom || []).some(b => b.c === c.id));
+    $('kDelZone').innerHTML = `<div class="confirm round">Supprimer « ${esc(c.name)} » ?${used.length ? ` Il sera retiré de la composition de : ${esc(used.map(r => r.name).join(', '))}.` : ''}
+      <button class="btn danger" id="kDelYes">Supprimer</button><button class="btn ghost" id="kDelNo">Garder</button></div>`;
+    $('kDelNo').onclick = () => openConsoSheet(c);
+    $('kDelYes').onclick = () => { tomb(c.id); D.consos = D.consos.filter(x => x.id !== c.id);
+      D.refs.forEach(r => { if ((r.bom || []).some(b => b.c === c.id)) { r.bom = r.bom.filter(b => b.c !== c.id); r.upd = Date.now(); } });
+      writeNow(); closeSheet(); renderAll(); toast('Consommable supprimé'); };
+  };
+}
+
+// ================= Recettes =================
+const UNITS = ['g', 'kg', 'mL', 'L', 'pièce', 'feuille', 'botte', 'cuil.'];
+let recQuery = '';
+$('recSearch').addEventListener('input', e => { recQuery = e.target.value.trim().toLowerCase(); renderRecipes(); });
+$('addRec').addEventListener('click', () => openRecipeEdit(null));
+const recTags = r => [r.yield ? nfa(r.yield) + ' L' : '', r.abv ? nfa(r.abv, 1) + ' % vol' : '', r.sugar ? nfa(r.sugar, 0) + ' g/L de sucre' : '',
+  r.macer ? `Macération ${nfa(r.macer, 1)} j` : '', r.rest ? `Repos ${nfa(r.rest, 1)} j` : ''].filter(Boolean);
+function renderRecipes() {
+  const list = $('recList');
+  if (!D.recipes.length) { list.innerHTML = `<div class="empty"><span class="sec-title">Ton carnet est vide</span><p>Note tes recettes : plantes, quantités, sucre, temps de macération et méthode. Tu pourras les recalculer pour n'importe quel volume.</p><button class="btn" data-act="add">+ Écrire une recette</button></div>`; return; }
+  const shown = D.recipes.filter(r => !recQuery || r.name.toLowerCase().includes(recQuery) || (r.ings || []).some(i => (i.name || '').toLowerCase().includes(recQuery))).sort(byName);
+  list.innerHTML = !shown.length ? `<p class="note">Aucune recette ne correspond à « ${esc(recQuery)} ».</p>` : shown.map(r => `
+    <button class="rcard" data-id="${r.id}"><span class="rn">${esc(r.name)}</span>
+      ${r.ref && refById(r.ref) ? `<span class="note">Produit : ${esc(refLabel(refById(r.ref)))}</span>` : ''}
+      <span class="rm">${recTags(r).map(t => `<span class="tag">${t}</span>`).join('')}<span class="tag">${(r.ings || []).length} ingrédient${(r.ings || []).length > 1 ? 's' : ''}</span></span></button>`).join('');
+}
+$('recList').addEventListener('click', e => {
+  if (e.target.closest('[data-act="add"]')) return openRecipeEdit(null);
+  const c = e.target.closest('.rcard'); if (!c) return; const r = D.recipes.find(x => x.id === c.dataset.id); if (r) openRecipeView(r);
+});
+function openRecipeView(r) {
+  const base = r.yield > 0 ? r.yield : 1;
+  openSheet(`
+    <span class="sec-title" style="color:var(--green-ink);font-size:22px">${esc(r.name)}</span>
+    ${r.ref && refById(r.ref) ? `<p class="note">Produit : <b>${esc(refLabel(refById(r.ref)))}</b></p>` : ''}
+    <div class="timeline">${recTags(r).map(t => `<span class="tag">${t}</span>`).join('')}</div>
+    ${(r.ings || []).length ? `<div class="field"><label class="lbl" for="vScale">Quantités pour</label>
+      <div class="inp"><input id="vScale" inputmode="decimal" value="${dec(base)}"><span>L de liqueur</span></div>
+      ${r.yield > 0 ? '' : '<p class="note">Volume de la recette non renseigné : les quantités sont données pour 1 L.</p>'}</div>
+      <table class="ing" id="vIngs"></table>` : '<p class="note">Aucun ingrédient noté.</p>'}
+    ${r.method ? `<div class="field"><span class="lbl">Méthode</span><p class="prose">${esc(r.method)}</p></div>` : ''}
+    ${r.notes ? `<div class="field"><span class="lbl">Notes</span><p class="prose">${esc(r.notes)}</p></div>` : ''}
+    <div class="sheet-actions">
+      <button class="btn ghost" id="vEdit">Modifier</button>
+      ${r.abv && r.base ? `<button class="btn" id="vCalc">Calculer le dosage</button>` : ''}
+    </div>
+    <button class="btn ghost block" id="vClose">Fermer</button>`);
+  const paint = () => { const t = $('vIngs'); if (!t) return; const k = (num($('vScale').value) || 0) / base;
+    t.innerHTML = r.ings.map(i => { const q = num(i.qty) * k;
+      const u = (i.unit || '') + (q > 1 && ['pièce', 'feuille', 'botte'].includes(i.unit) ? 's' : '');
+      return `<tr><td>${esc(i.name)}</td><td>${i.qty !== '' && isFinite(q) ? nfa(q, q < 10 ? 2 : 1) + ' ' + esc(u) : '—'}</td></tr>`; }).join(''); };
+  if ($('vScale')) { $('vScale').addEventListener('input', paint); paint(); }
+  $('vEdit').onclick = () => openRecipeEdit(r);
+  $('vClose').onclick = closeSheet;
+  if ($('vCalc')) $('vCalc').onclick = () => {
+    const vol = num($('vScale')?.value) || base;
+    Object.assign(C, { baseAbv: dec(r.base), targetAbv: dec(r.abv), sugar: dec(r.sugar || 0), sugarUnit: 'gl', basis: 'final', amount: dec(vol), amountUnit: 'L', mode: 'recette' });
+    CALC_IDS.forEach(id => $(id).value = C[id]); paintSugarUnit(); paintBasis(); paintAmountUnit(); paintModeSeg(); paintMode();
+    persist(); renderLiq(); closeSheet(); setTab('calcul'); toast(`Dosage de « ${r.name} » pour ${nfa(vol)} L`);
+  };
+}
+function ingRowHtml(i) {
+  return `<div class="ing-row"><input placeholder="Verveine fraîche" value="${i ? esc(i.name) : ''}" aria-label="Ingrédient">
+    <input inputmode="decimal" placeholder="Qté" value="${i ? esc(dec(i.qty)) : ''}" aria-label="Quantité">
+    <select aria-label="Unité">${UNITS.map(u => `<option${(i?.unit || 'g') === u ? ' selected' : ''}>${u}</option>`).join('')}</select>
+    <button type="button" class="x" data-act="rm" aria-label="Retirer">×</button></div>`;
+}
+function openRecipeEdit(r) {
+  openSheet(`
+    <span class="sec-title">${r ? 'Modifier la recette' : 'Nouvelle recette'}</span>
+    <div class="field"><label class="lbl" for="eName">Nom</label><div class="inp"><input id="eName" value="${r ? esc(r.name) : ''}" placeholder="Élixir de Verveine" autocomplete="off"></div></div>
+    ${D.refs.length ? `<div class="field"><label class="lbl" for="eRef">Produit fini (facultatif)</label><div class="inp"><select id="eRef"><option value="">—</option>${[...D.refs].sort(byName).map(x => `<option value="${x.id}"${r?.ref === x.id ? ' selected' : ''}>${esc(refLabel(x))}</option>`).join('')}</select></div></div>` : ''}
+    <div class="row2">
+      <div class="field"><label class="lbl" for="eYield">Volume obtenu</label><div class="inp"><input id="eYield" inputmode="decimal" value="${r ? dec(r.yield) : ''}" placeholder="10"><span>L</span></div></div>
+      <div class="field"><label class="lbl" for="eAbv">Degré final</label><div class="inp"><input id="eAbv" inputmode="decimal" value="${r ? dec(r.abv) : ''}" placeholder="40"><span>% vol</span></div></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label class="lbl" for="eBase">Alcool de base</label><div class="inp"><input id="eBase" inputmode="decimal" value="${r ? dec(r.base) : '96,2'}"><span>% vol</span></div></div>
+      <div class="field"><label class="lbl" for="eSugar">Sucre</label><div class="inp"><input id="eSugar" inputmode="decimal" value="${r ? dec(r.sugar) : ''}" placeholder="0"><span>g/L</span></div></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label class="lbl" for="eMacer">Macération</label><div class="inp"><input id="eMacer" inputmode="decimal" value="${r ? dec(r.macer) : ''}" placeholder="0"><span>jours</span></div></div>
+      <div class="field"><label class="lbl" for="eRest">Repos</label><div class="inp"><input id="eRest" inputmode="decimal" value="${r ? dec(r.rest) : ''}" placeholder="0"><span>jours</span></div></div>
+    </div>
+    <div class="field"><span class="lbl">Ingrédients (plantes, épices, fruits…)</span>
+      <div class="bom" id="ings">${(r?.ings?.length ? r.ings : [null]).map(ingRowHtml).join('')}</div>
+      <button type="button" class="link" id="ingAdd" style="align-self:flex-start">+ Ajouter un ingrédient</button>
+      <p class="note">Quantités pour le volume obtenu. L'alcool, l'eau et le sucre se calculent avec « Calculer le dosage ».</p></div>
+    <div class="field"><label class="lbl" for="eMethod">Méthode</label><div class="inp"><textarea id="eMethod" rows="5" placeholder="Effeuiller la verveine, macérer à l'abri de la lumière, filtrer…">${r ? esc(r.method) : ''}</textarea></div></div>
+    <div class="field"><label class="lbl" for="eNotes">Notes</label><div class="inp"><textarea id="eNotes" rows="3" placeholder="Récolte, essais, ajustements…">${r ? esc(r.notes) : ''}</textarea></div></div>
+    <div class="msg" id="fErr" hidden></div>
+    <div class="sheet-actions"><button class="btn ghost" id="eCancel">Annuler</button><button class="btn" id="eSave">Enregistrer</button></div>
+    ${r ? `<div id="eDelZone"><button class="btn danger-ghost block" id="eDel">Supprimer cette recette</button></div>` : ''}`);
+  $('ingAdd').onclick = () => { $('ings').insertAdjacentHTML('beforeend', ingRowHtml(null)); $('ings').lastElementChild.querySelector('input').focus(); };
+  $('ings').addEventListener('click', e => { if (e.target.closest('[data-act="rm"]')) e.target.closest('.ing-row').remove(); });
+  $('eCancel').onclick = () => r ? openRecipeView(r) : closeSheet();
+  $('eSave').onclick = () => {
+    const name = $('eName').value.trim(); if (!name) return sheetErr('Donne un nom à la recette.');
+    const pos = id => { const v = num($(id).value); return v > 0 ? v : null; };
+    const abv = pos('eAbv'), base = pos('eBase');
+    if (abv && base && abv >= base) return sheetErr("Le degré final doit être plus bas que celui de l'alcool de base.");
+    const ings = [...$('ings').querySelectorAll('.ing-row')].map(row => { const [n, q, u] = row.querySelectorAll('input,select');
+      const qv = num(q.value); return { name: n.value.trim(), qty: isFinite(qv) ? qv : '', unit: u.value }; }).filter(i => i.name);
+    const data = { name, ref: $('eRef')?.value || null, yield: pos('eYield'), abv, base, sugar: pos('eSugar'), macer: pos('eMacer'), rest: pos('eRest'),
+      ings, method: $('eMethod').value.trim(), notes: $('eNotes').value.trim(), upd: Date.now() };
+    let rec = r; if (rec) Object.assign(rec, data); else { rec = { id: uid(), ...data }; D.recipes.push(rec); }
+    writeNow(); renderRecipes(); openRecipeView(rec); toast(r ? 'Recette mise à jour' : 'Recette enregistrée');
+  };
+  if (r) $('eDel').onclick = () => {
+    $('eDelZone').innerHTML = `<div class="confirm round">Supprimer la recette « ${esc(r.name)} » ? Elle sera définitivement effacée.
+      <button class="btn danger" id="eDelYes">Supprimer</button><button class="btn ghost" id="eDelNo">Garder</button></div>`;
+    $('eDelNo').onclick = () => openRecipeEdit(r);
+    $('eDelYes').onclick = () => { tomb(r.id); D.recipes = D.recipes.filter(x => x.id !== r.id); writeNow(); closeSheet(); renderRecipes(); toast('Recette supprimée'); };
+  };
+}
+
+// ================= Ventes =================
+let cart = {}; // refId -> { qty, price }
+let histDays = 7;
+const saleTotal = s => s.items.reduce((t, i) => t + i.qty * i.price, 0);
+const saleQty = s => s.items.reduce((t, i) => t + i.qty, 0);
+const PAY = { esp: 'Espèces', cb: 'Carte SumUp', autre: 'Autre' };
+$('saleDate').value = todayKey(); $('saleDate').max = todayKey();
+const checkoutLabel = tot => !Object.keys(cart).length ? 'Encaisser' : (D.ui.pay === 'cb' && HAS_ANDROID ? `Payer ${eur(tot)} avec SumUp` : `Encaisser ${eur(tot)}`);
+bindSeg('pay', () => D.ui.pay, v => { D.ui.pay = v; updateCartTotals(); });
+function renderSales() {
+  const has = D.refs.length > 0;
+  $('salesEmpty').hidden = has; $('salesMain').hidden = !has;
+  if (!has) { $('cart').hidden = true; $('cartEmpty').hidden = true; }
+  for (const id of Object.keys(cart)) if (!refById(id)) delete cart[id];
+  if (has) {
+    $('tiles').innerHTML = [...D.refs].sort(byName).map(r => {
+      const inCart = cart[r.id]?.qty || 0, left = r.stock - inCart;
+      return `<button class="tile${left <= 0 ? ' dim' : ''}" data-id="${r.id}">${inCart ? `<span class="badge">${inCart}</span>` : ''}
+        <span class="tn">${esc(refLabel(r))}</span><span class="ts">${left <= 0 ? 'Plus en stock' : `Reste ${left}`}</span>
+        <span class="tp">${eur(r.price || 0)}</span></button>`; }).join('');
+    const lines = Object.entries(cart);
+    $('cart').hidden = !lines.length; $('cartEmpty').hidden = !!lines.length;
+    $('cartLines').innerHTML = lines.map(([id, l]) => { const r = refById(id); return `
+      <div class="cart-line" data-id="${id}"><span class="cn">${esc(refLabel(r))}</span><span class="ct">${eur(l.qty * l.price)}</span>
+        <span class="cp"><input inputmode="decimal" value="${nf(l.price, 2)}" aria-label="Prix unitaire" data-act="price"> € l'unité</span>
+        <div class="qty"><button data-act="minus" aria-label="Retirer">−</button><span class="n">${l.qty}</span><button data-act="plus" aria-label="Ajouter">+</button></div></div>`; }).join('');
+    updateCartTotals();
+  }
+  renderHistory();
+}
+function updateCartTotals() {
+  const tot = Object.values(cart).reduce((t, l) => t + l.qty * l.price, 0);
+  document.querySelectorAll('.cart-line').forEach(el => { const l = cart[el.dataset.id]; if (l) el.querySelector('.ct').textContent = eur(l.qty * l.price); });
+  $('cartTotal').textContent = eur(tot); $('checkout').textContent = checkoutLabel(tot);
+}
+$('tiles').addEventListener('click', e => {
+  const t = e.target.closest('.tile'); if (!t) return;
+  const r = refById(t.dataset.id), inCart = cart[r.id]?.qty || 0;
+  if (r.stock - inCart <= 0) return toast(`Plus de « ${r.name} » en stock. Fais une mise en bouteille dans l'onglet Stock.`);
+  cart[r.id] = { qty: inCart + 1, price: cart[r.id]?.price ?? (r.price || 0) }; renderSales();
+});
+$('cartLines').addEventListener('click', e => {
+  const b = e.target.closest('button[data-act]'); if (!b) return;
+  const id = b.closest('[data-id]').dataset.id, l = cart[id], r = refById(id);
+  if (b.dataset.act === 'plus') { if (l.qty >= r.stock) return toast('Tout le stock est déjà dans la vente.'); l.qty++; }
+  else { l.qty--; if (l.qty <= 0) delete cart[id]; }
+  renderSales();
+});
+$('cartLines').addEventListener('input', e => {
+  if (e.target.dataset.act !== 'price') return;
+  const id = e.target.closest('[data-id]').dataset.id, v = num(e.target.value); cart[id].price = v >= 0 ? v : 0; updateCartTotals();
+});
+$('cartClear').addEventListener('click', () => { cart = {}; renderSales(); });
+$('checkout').addEventListener('click', () => {
+  const lines = Object.entries(cart); if (!lines.length) return;
+  const dk = $('saleDate').value || todayKey();
+  const ts = dk === todayKey() ? Date.now() : (() => { const d = keyToDate(dk); d.setHours(12, 0, 0, 0); return d.getTime(); })();
+  const items = lines.map(([id, l]) => ({ ref: id, name: refLabel(refById(id)), qty: l.qty, price: l.price }));
+  const sale = { id: uid(), ts, items, pay: D.ui.pay };
+  if (sale.pay === 'cb' && HAS_ANDROID) return startSumUp(sale);
+  finalizeSale(sale); toast(`Vente de ${eur(saleTotal(sale))} enregistrée, stock mis à jour`);
+});
+function finalizeSale(sale, tx) {
+  if (tx) sale.tx = tx;
+  D.sales.push(sale); cart = {}; writeNow(); renderAll();
+}
+// ---- Paiement SumUp : seule la réponse portant l'identifiant du paiement lancé est acceptée ----
+function startSumUp(sale) {
+  D.pendingPay = sale; writeNow();
+  const title = ("L'Eau de Là · " + sale.items.map(i => `${i.qty} × ${i.name}`).join(', ')).slice(0, 90);
+  showPayWait();
+  try { Android.payWithSumUp(saleTotal(sale).toFixed(2), title, sale.id); } catch (e) { onSumUpResult({ status: 'noapp', foreignId: sale.id }); }
+}
+function showPayWait() {
+  const p = D.pendingPay; if (!p) return;
+  openSheet(`<span class="sec-title">Paiement SumUp</span><div class="big"><span class="v">${eur(saleTotal(p))}</span></div>
+    <p class="note">Le paiement est en cours dans l'appli SumUp. Une fois terminé, tu reviens ici automatiquement et la vente s'enregistre si le paiement est accepté.</p>
+    <div class="sheet-actions"><button class="btn ghost" id="payCancel">Annuler</button><button class="btn" id="payRetry">Rouvrir SumUp</button></div>`);
+  $('payCancel').onclick = () => { restoreCart(D.pendingPay); D.pendingPay = null; writeNow(); closeSheet(); renderSales(); toast('Paiement annulé, aucune vente enregistrée'); };
+  $('payRetry').onclick = () => { const q = D.pendingPay; if (q) startSumUp(q); };
+}
+function restoreCart(p) { if (!p) return; cart = {}; p.items.forEach(i => { if (refById(i.ref)) cart[i.ref] = { qty: i.qty, price: i.price }; }); }
+window.onSumUpResult = r => {
+  const p = D.pendingPay;
+  if (!p || !r || r.foreignId !== p.id) { toast('Réponse SumUp ignorée : elle ne correspond à aucun paiement en cours.'); return; }
+  D.pendingPay = null; if (!$('sheet').hidden) closeSheet();
+  if (r.status === 'success') { finalizeSale(p, r.txCode || ''); toast(`Paiement SumUp de ${eur(saleTotal(p))} accepté, stock mis à jour`); }
+  else { restoreCart(p); writeNow(); renderSales();
+    toast(r.status === 'noapp' ? "L'appli SumUp n'est pas installée sur ce téléphone." : `Paiement non abouti${r.message ? ' (' + r.message + ')' : ''}. Aucune vente enregistrée.`); }
+};
+function renderHistory() {
+  const byDay = new Map();
+  [...D.sales].sort((a, b) => b.ts - a.ts).forEach(s => { const k = dayKey(new Date(s.ts)); if (!byDay.has(k)) byDay.set(k, []); byDay.get(k).push(s); });
+  const keys = [...byDay.keys()];
+  const todayT = byDay.get(todayKey())?.reduce((t, s) => t + saleTotal(s), 0) || 0;
+  $('histNote').textContent = `Aujourd'hui : ${eur(todayT)}`;
+  if (!keys.length) { $('history').innerHTML = `<p class="note">Aucune vente enregistrée pour l'instant.</p>`; $('moreHist').hidden = true; return; }
+  $('moreHist').hidden = keys.length <= histDays;
+  const fmtDay = k => { const d = keyToDate(k), diff = Math.round((keyToDate(todayKey()) - d) / 864e5);
+    if (diff === 0) return "Aujourd'hui"; if (diff === 1) return 'Hier';
+    return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }); };
+  $('history').innerHTML = keys.slice(0, histDays).map(k => { const list = byDay.get(k), tot = list.reduce((t, s) => t + saleTotal(s), 0);
+    return `<div class="day"><div class="day-head"><b>${fmtDay(k)}</b><span>${list.length} vente${list.length > 1 ? 's' : ''} · ${eur(tot)}</span></div>
+      ${list.map(s => { const d = new Date(s.ts);
+        return `<div class="sale" data-sale="${s.id}"><span class="st">${pad(d.getHours())}:${pad(d.getMinutes())}</span>
+          <div class="si">${s.items.map(i => `${i.qty} × ${esc(i.name)}`).join('<br>')}<small>${PAY[s.pay] || ''}${s.tx ? ' · ' + esc(s.tx) : ''}</small></div>
+          <div><div class="sv">${eur(saleTotal(s))}</div><button class="del" data-act="del">Annuler</button></div></div>`; }).join('')}</div>`; }).join('');
+}
+$('moreHist').addEventListener('click', () => { histDays += 14; renderHistory(); });
+$('history').addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const row = b.closest('[data-sale]'), s = D.sales.find(x => x.id === row.dataset.sale); if (!s) return;
+  if (b.dataset.act === 'del') {
+    if (row.nextElementSibling?.classList.contains('confirm')) return;
+    row.insertAdjacentHTML('afterend', `<div class="confirm" data-sale="${s.id}">Annuler cette vente ? Les bouteilles reviennent dans le stock.${s.tx ? ' Pense à rembourser aussi dans SumUp.' : ''}
+      <button class="btn danger" data-act="delYes">Annuler la vente</button><button class="btn ghost" data-act="delNo">Garder</button></div>`);
+  } else if (b.dataset.act === 'delNo') row.remove();
+  else if (b.dataset.act === 'delYes') { tomb(s.id);
+    D.sales = D.sales.filter(x => x.id !== s.id); writeNow(); renderAll(); toast('Vente annulée, stock remis à jour'); }
+});
+
+// ================= Graphique =================
+let selDay = null;
+bindSeg('period', () => D.ui.period, v => { D.ui.period = v; selDay = null; renderGraph(); });
+bindSeg('metric', () => D.ui.metric, v => { D.ui.metric = v; renderGraph(); });
+function niceMax(m) { if (m <= 0) return 1; const p = Math.pow(10, Math.floor(Math.log10(m))); for (const f of [1, 2, 2.5, 5, 10]) if (f * p >= m) return f * p; return 10 * p; }
+const barRows = (rows, color) => rows.map(([label, valTxt, share]) => `<div class="top-row"><span>${esc(label)}</span><span>${valTxt}</span><div class="tb"><div style="width:${(share * 100).toFixed(1)}%${color ? ';background:' + color : ''}"></div></div></div>`).join('');
+function renderGraph() {
+  const n = +D.ui.period, metric = D.ui.metric, days = [], t0 = keyToDate(todayKey());
+  for (let i = n - 1; i >= 0; i--) { const d = new Date(t0); d.setDate(d.getDate() - i); days.push(dayKey(d)); }
+  const idx = new Map(days.map((k, i) => [k, i]));
+  const ca = new Array(n).fill(0), qty = new Array(n).fill(0), cnt = new Array(n).fill(0), prod = new Map(), pays = new Map();
+  for (const s of D.sales) { const i = idx.get(dayKey(new Date(s.ts))); if (i === undefined) continue;
+    ca[i] += saleTotal(s); qty[i] += saleQty(s); cnt[i]++; pays.set(s.pay, (pays.get(s.pay) || 0) + saleTotal(s));
+    for (const it of s.items) { const p = prod.get(it.name) || { qty: 0, ca: 0 }; p.qty += it.qty; p.ca += it.qty * it.price; prod.set(it.name, p); } }
+  const sum = a => a.reduce((x, y) => x + y, 0), tCa = sum(ca), tQty = sum(qty), tCnt = sum(cnt);
+  $('gStats').innerHTML = `
+    <div class="stat"><span class="v">${eur(tCa)}</span><span class="k">Chiffre d'affaires</span></div>
+    <div class="stat"><span class="v">${nf(tQty, 0)}</span><span class="k">Bouteilles vendues</span></div>
+    <div class="stat"><span class="v">${tCnt}</span><span class="k">Ventes</span></div>
+    <div class="stat"><span class="v">${tCnt ? eur(tCa / tCnt) : '—'}</span><span class="k">Panier moyen</span></div>`;
+  const vals = metric === 'ca' ? ca : qty, fmt = metric === 'ca' ? eur : (x => nfa(x, 1) + ' bout.');
+  const W = Math.max(280, $('chart').clientWidth || 320), H = 210, L = 44, R = 6, T = 10, B = 26;
+  const pw = W - L - R, ph = H - T - B, max = niceMax(Math.max(...vals)), step = pw / n, bw = Math.max(1.5, step * (n <= 7 ? .58 : n <= 30 ? .7 : .8));
+  const y = v => T + ph - (v / max) * ph;
+  let svg = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Ventes par jour">`;
+  for (let k = 0; k <= 4; k++) { const v = max * k / 4, yy = y(v);
+    svg += `<line class="grid" x1="${L}" x2="${W - R}" y1="${yy}" y2="${yy}"/><text x="${L - 6}" y="${yy + 3.5}" text-anchor="end">${metric === 'ca' ? nfa(v, 1) + ' €' : nfa(v, 1)}</text>`; }
+  const every = n <= 7 ? 1 : n <= 30 ? 5 : 15;
+  days.forEach((k, i) => { const x = L + i * step + (step - bw) / 2, h = (vals[i] / max) * ph;
+    svg += `<rect class="${k === selDay ? 'b sel' : (i === n - 1 ? 'b today' : 'b')}" x="${x.toFixed(2)}" y="${(T + ph - h).toFixed(2)}" width="${bw.toFixed(2)}" height="${Math.max(0, h).toFixed(2)}" rx="${Math.min(3, bw / 3).toFixed(1)}"/>`;
+    if ((n - 1 - i) % every === 0) { const d = keyToDate(k);
+      const lab = n <= 7 ? d.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '') + ' ' + d.getDate() : d.getDate() + ' ' + d.toLocaleDateString('fr-FR', { month: 'short' }).replace('.', '');
+      const cx = L + i * step + step / 2, anc = i === n - 1 && n > 7 ? 'end' : 'middle';
+      svg += `<text x="${(anc === 'end' ? Math.min(W - R, cx + step / 2) : cx).toFixed(1)}" y="${H - 8}" text-anchor="${anc}">${lab}</text>`; } });
+  const avg = sum(vals) / n;
+  if (avg > 0) svg += `<line class="avg" x1="${L}" x2="${W - R}" y1="${y(avg)}" y2="${y(avg)}"/>`;
+  svg += `<rect x="${L}" y="${T}" width="${pw}" height="${ph + B}" fill="transparent" id="chartHit"/></svg>`;
+  $('chart').innerHTML = svg;
+  if (selDay && idx.has(selDay)) { const i = idx.get(selDay);
+    $('chartRead').innerHTML = `<span>${keyToDate(selDay).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</span><b>${eur(ca[i])} · ${nf(qty[i], 0)} bout.</b>`; }
+  else $('chartRead').innerHTML = `<span>Moyenne par jour</span><b>${fmt(avg)}</b>`;
+  $('chartHit').addEventListener('click', e => { const rect = $('chart').querySelector('svg').getBoundingClientRect();
+    const i = Math.floor(((e.clientX - rect.left) * W / rect.width - L) / step); if (i < 0 || i >= n) return;
+    selDay = selDay === days[i] ? null : days[i]; renderGraph(); });
+  const plist = [...prod.entries()].sort((a, b) => b[1].ca - a[1].ca || b[1].qty - a[1].qty);
+  const pmax = Math.max(1e-9, ...plist.map(([, p]) => metric === 'ca' ? p.ca : p.qty));
+  $('topList').innerHTML = plist.length ? barRows(plist.map(([nm, p]) => [nm, metric === 'ca' ? eur(p.ca) : nf(p.qty, 0) + ' bout.', (metric === 'ca' ? p.ca : p.qty) / pmax])) : `<p class="note">Aucune vente sur cette période.</p>`;
+  const paylist = Object.keys(PAY).map(k => [k, pays.get(k) || 0]).filter(([, v]) => v > 0);
+  $('payList').innerHTML = paylist.length ? barRows(paylist.map(([k, v]) => [PAY[k], `${eur(v)} · ${nf(v / tCa * 100, 0)} %`, v / tCa]), 'var(--slate)') : `<p class="note">Aucune vente sur cette période.</p>`;
+  const outs = new Map();
+  D.moves.filter(m => m.kind === 'ref' && m.type === 'sortie' && idx.has(dayKey(new Date(m.ts)))).forEach(m => outs.set(m.reason || 'autre', (outs.get(m.reason || 'autre') || 0) - m.qty));
+  const olist = [...outs.entries()].sort((a, b) => b[1] - a[1]), omax = Math.max(1, ...olist.map(o => o[1]));
+  $('outList').innerHTML = olist.length ? barRows(olist.map(([k, v]) => [REASONS_REF[k] || 'Autre', nf(v, 0) + ' bout.', v / omax]), 'var(--gold)') : `<p class="note">Aucune sortie sans vente sur cette période.</p>`;
+}
+window.addEventListener('resize', () => { if (D.ui.tab === 'graph') renderGraph(); });
+
+// ================= Sauvegarde =================
+let pendingImport = null;
+$('openBackup').addEventListener('click', openBackup);
+function openBackup() {
+  openSheet(`
+    <span class="sec-title">Sauvegarde</span>
+    <p class="note">Tes données restent sur le téléphone, sans réseau. Fais une sauvegarde de temps en temps pour ne rien perdre si tu changes de téléphone : <b>${D.refs.length} produits, ${D.consos.length} consommables, ${D.recipes.length} recettes, ${D.sales.length} ventes</b>.</p>
+    <button class="btn block" id="bExport">Enregistrer une sauvegarde</button>
+    <button class="btn ghost block" id="bCsv">Exporter les ventes (tableur CSV)</button>
+    <button class="btn ghost block" id="bCsvM">Exporter les mouvements de stock (CSV)</button>
+    <button class="btn ghost block" id="bImport">Restaurer une sauvegarde</button>
+    <div id="bZone"></div>
+    <button class="btn ghost block" id="bClose">Fermer</button>`);
+  $('bClose').onclick = closeSheet;
+  $('bExport').onclick = () => exportFile(`eau-de-la-sauvegarde-${todayKey()}.json`, 'application/json', JSON.stringify(D, null, 1));
+  const csv = rows => '﻿' + rows.map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(';')).join('\r\n');
+  const hm = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  $('bCsv').onclick = () => { const rows = [['Date', 'Heure', 'Produit', 'Quantité', 'Prix unitaire', 'Total', 'Paiement', 'Transaction SumUp']];
+    [...D.sales].sort((a, b) => a.ts - b.ts).forEach(s => { const d = new Date(s.ts);
+      s.items.forEach(i => rows.push([dayKey(d), hm(d), i.name, i.qty, nf(i.price, 2), nf(i.qty * i.price, 2), PAY[s.pay] || '', s.tx || ''])); });
+    exportFile(`eau-de-la-ventes-${todayKey()}.csv`, 'text/csv', csv(rows)); };
+  $('bCsvM').onclick = () => { const rows = [['Date', 'Heure', 'Article', 'Catégorie', 'Variation', 'Type', 'Motif', 'Précision']];
+    [...D.moves].sort((a, b) => a.ts - b.ts).forEach(m => { const d = new Date(m.ts);
+      rows.push([dayKey(d), hm(d), m.name, m.kind === 'ref' ? 'Produit fini' : 'Consommable', nfa(m.qty, 3), MOVE_TYPES[m.type] || m.type,
+        m.reason ? ((m.kind === 'ref' ? REASONS_REF : REASONS_CONSO)[m.reason] || m.reason) : '', m.note || '']);
+      (m.uses || []).forEach(u => rows.push([dayKey(d), hm(d), u.name, 'Consommable', nfa(-u.qty, 3), 'Consommé par mise en bouteille', '', m.name])); });
+    exportFile(`eau-de-la-mouvements-${todayKey()}.csv`, 'text/csv', csv(rows)); };
+  $('bImport').onclick = () => { if (HAS_ANDROID) Android.importFile(); else toast("La restauration fonctionne dans l'appli Android."); };
+}
+function exportFile(name, mime, content) {
+  if (HAS_ANDROID) Android.exportFile(name, mime, content);
+  else { try { navigator.clipboard.writeText(content).then(() => toast('Copié dans le presse-papiers'), () => toast("L'export fonctionne dans l'appli Android.")); } catch (e) { toast("L'export fonctionne dans l'appli Android."); } }
+}
+window.onExportDone = ok => { if (ok === null) return; toast(ok ? 'Fichier enregistré' : "Le fichier n'a pas pu être enregistré. Réessaie dans un autre dossier."); };
+window.onImport = text => {
+  let o = null; try { o = JSON.parse(text); } catch (e) {}
+  if (!o || !Array.isArray(o.refs) || !Array.isArray(o.sales)) { toast("Ce fichier n'est pas une sauvegarde L'Eau de Là."); return; }
+  pendingImport = normalize(o);
+  if ($('sheet').hidden || !$('bZone')) openBackup();
+  const p = pendingImport;
+  $('bZone').innerHTML = `<div class="confirm round">Remplacer les données actuelles par cette sauvegarde (${p.refs.length} produits, ${p.consos.length} consommables, ${p.recipes.length} recettes, ${p.sales.length} ventes) ?
+    <button class="btn danger" id="bYes">Remplacer</button><button class="btn ghost" id="bNo">Annuler</button></div>`;
+  $('bNo').onclick = () => { pendingImport = null; $('bZone').innerHTML = ''; };
+  $('bYes').onclick = () => { ['refs', 'sales', 'consos', 'moves', 'recipes', 'del'].forEach(k => D[k] = pendingImport[k]); pendingImport = null; cart = {};
+    writeNow(); closeSheet(); renderAll(); toast('Sauvegarde restaurée'); };
+};
+
+// ================= Synchronisation entre deux téléphones =================
+let syncing = false;
+$('openSync').addEventListener('click', () => {
+  if (!HAS_ANDROID) return toast("La synchronisation fonctionne dans l'appli Android.");
+  syncSheet(`<span class="sec-title">Synchroniser</span>
+    <p class="note">Mets les deux téléphones côte à côte, avec le Bluetooth et le Wi-Fi activés (pas besoin d'Internet), puis touche <b>Synchroniser</b> sur <b>les deux</b>. Chaque téléphone récupère les ventes, mouvements, produits et recettes de l'autre.</p>
+    <button class="btn block" id="syncGo">Synchroniser</button>
+    <button class="btn ghost block" id="syncClose">Fermer</button>`);
+  $('syncGo').onclick = () => { writeNow(); syncing = true; Android.syncStart(); };
+  $('syncClose').onclick = closeSheet;
+});
+function syncSheet(html) { openSheet(html, () => { if (syncing) { syncing = false; try { Android.syncStop(); } catch (e) {} } }); }
+function syncCancelBtn(label = 'Annuler') { return `<button class="btn ghost block" id="syncCancel">${label}</button>`; }
+function bindCancel() { const b = $('syncCancel'); if (b) b.onclick = closeSheet; }
+window.onSyncStatus = st => {
+  if (!syncing && st.state !== 'done') return;
+  const S = st.state;
+  if (S === 'searching' || S === 'visible' || S === 'found') {
+    if (S === 'searching') { clearTimeout(syncTimer); syncTimer = setTimeout(syncSlow, 30000); syncSteps = { visible: false, found: '' }; }
+    if (S === 'visible') syncSteps.visible = true;
+    if (S === 'found') syncSteps.found = st.name || 'un téléphone';
+    syncSheet(`<span class="sec-title">Recherche…</span><div class="spin"></div>
+      <div class="sync-sum"><div><span>Ce téléphone est visible</span><b>${syncSteps.visible ? 'oui' : '…'}</b></div>
+        <div><span>Autre téléphone détecté</span><b>${syncSteps.found ? esc(syncSteps.found) : '…'}</b></div></div>
+      <p class="note">Touche aussi <b>Synchroniser</b> sur l'autre téléphone, appli ouverte et écran allumé.</p>
+      <div id="syncSlow"></div>${syncCancelBtn()}`);
+  }
+  else if (S === 'confirm') { clearTimeout(syncTimer);
+    syncSheet(`<span class="sec-title">Téléphone trouvé</span><p class="note">${esc(st.name || 'Autre téléphone')}</p>
+      <div class="code">${esc(st.code)}</div>
+      <p class="note">Vérifie que <b>le même code</b> s'affiche sur l'autre téléphone, puis accepte sur les deux.</p>
+      <div class="sheet-actions"><button class="btn ghost" id="syncNo">Refuser</button><button class="btn" id="syncYes">Accepter</button></div>`);
+    $('syncYes').onclick = () => Android.syncAccept();
+    $('syncNo').onclick = () => { syncing = false; Android.syncReject(); closeSheet(); };
+  }
+  else if (S === 'waiting_other') syncSheet(`<span class="sec-title">En attente…</span><div class="spin"></div><p class="note">Accepte aussi sur l'autre téléphone.</p>${syncCancelBtn()}`);
+  else if (S === 'transfer') syncSheet(`<span class="sec-title">Échange en cours…</span><div class="spin"></div><p class="note">Ne ferme pas l'appli, ça prend quelques secondes.</p>`);
+  else if (S === 'done') { syncing = false; if (!lastSync) return;
+    syncSheet(`<span class="sec-title">Synchronisé</span>
+      <div class="sync-sum">${lastSync.map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('') || '<p class="note">Les deux téléphones étaient déjà à jour.</p>'}</div>
+      ${syncCancelBtn('Fermer')}`); lastSync = null; }
+  else {
+    syncing = false; clearTimeout(syncTimer);
+    const msg = { perm: "Sans l'autorisation « Appareils à proximité », l'appli ne peut pas trouver l'autre téléphone. Autorise-la dans les réglages d'Android (Applis › Liqueurs › Autorisations).",
+      refused: "La connexion a été refusée sur l'un des téléphones.",
+      lost: "La connexion a été coupée avant la fin. Rapproche les téléphones et recommence : rien n'a été perdu.",
+      error: `La synchronisation a échoué${st.step ? ' (' + esc(st.step) + ')' : ''}. Vérifie que le Bluetooth, le Wi-Fi et la localisation sont activés sur les deux téléphones, puis recommence.<br><small>Code ${esc(st.code)} · ${esc(st.detail || '')}</small>`,
+      old: "L'autre téléphone a une version plus ancienne de l'appli. Installe la même version sur les deux." }[S];
+    if (!msg) return;
+    syncSheet(`<span class="sec-title">Synchronisation interrompue</span><div class="msg">${msg}</div>${syncCancelBtn('Fermer')}`); bindCancel(); return;
+  }
+  bindCancel();
+};
+let lastSync = null, syncTimer = null, syncSteps = { visible: false, found: '' };
+function syncSlow() {
+  const z = $('syncSlow'); if (!z || !syncing) return;
+  z.innerHTML = `<div class="msg">Ça prend du temps. Sur les deux téléphones, vérifie :<br>• Bluetooth <b>et</b> Wi-Fi activés (pas besoin d'être connecté à un réseau)<br>• Localisation activée dans le volet rapide<br>• Autorisation « Appareils à proximité » accordée à Liqueurs<br>Puis annule et relance sur les deux en même temps.</div>`;
+}
+function mergeRemote(o) {
+  const R = normalize(o);
+  if (R.v < 4) return null;
+  const del = { ...D.del }; for (const [k, t] of Object.entries(R.del || {})) del[k] = Math.max(del[k] || 0, t);
+  const lww = (a, b, key) => { const m = new Map(a.map(x => [x.id, x])); let c = 0;
+    for (const x of b) { const y = m.get(x.id); if (!y || (x.upd || 0) > (y.upd || 0)) { m.set(x.id, x); if (!del[x.id]) c++; } }
+    return { list: [...m.values()].filter(x => !del[x.id]), c }; };
+  const uni = (a, b) => { const m = new Map(a.map(x => [x.id, x])); let c = 0;
+    for (const x of b) if (!m.has(x.id)) { m.set(x.id, x); if (!del[x.id]) c++; }
+    return { list: [...m.values()].filter(x => !del[x.id]), c }; };
+  const gone = ['sales', 'moves', 'refs', 'consos', 'recipes'].reduce((t, k) => t + D[k].filter(x => del[x.id] && !D.del[x.id]).length, 0);
+  const refs = lww(D.refs, R.refs), consos = lww(D.consos, R.consos), recipes = lww(D.recipes, R.recipes);
+  const sales = uni(D.sales, R.sales), moves = uni(D.moves, R.moves);
+  Object.assign(D, { refs: refs.list, consos: consos.list, recipes: recipes.list, sales: sales.list, moves: moves.list, del });
+  return [['Ventes reçues', sales.c], ['Mouvements de stock reçus', moves.c], ['Produits ajoutés ou modifiés', refs.c],
+    ['Consommables ajoutés ou modifiés', consos.c], ['Recettes ajoutées ou modifiées', recipes.c], ['Éléments supprimés', gone]].filter(([, v]) => v > 0);
+}
+window.onSyncData = text => {
+  let o = null; try { o = JSON.parse(text); } catch (e) {}
+  const sum = o ? mergeRemote(o) : null;
+  if (!sum) { onSyncStatus({ state: 'old' }); try { Android.syncStop(); } catch (e) {} return; }
+  lastSync = sum; writeNow(); renderAll();
+  try { Android.syncMerged(); } catch (e) {}
+};
+
+// ================= Onglets =================
+const TABS = {
+  calcul: ['Calcul', 'Alcool, eau & sucre'],
+  recettes: ['Recettes', 'Le carnet de la maison'],
+  stock: ['Stock', 'Produits finis'],
+  conso: ['Consommables', 'Bouteilles, bouchons, étiquettes…'],
+  ventes: ['Ventes', 'Encaisser & historique'],
+  graph: ['Graphique', 'Ventes par jour']
+};
+function setTab(t) {
+  if (!TABS[t]) t = 'calcul';
+  D.ui.tab = t; persist();
+  for (const k of Object.keys(TABS)) $('v-' + k).hidden = k !== t;
+  document.querySelectorAll('nav.tabs button').forEach(b => { if (b.dataset.tab === t) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+  $('viewTitle').textContent = TABS[t][0]; $('viewSub').textContent = TABS[t][1];
+  if (t === 'graph') renderGraph();
+  if (t === 'ventes') { if (!$('saleDate').value) $('saleDate').value = todayKey(); $('saleDate').max = todayKey(); }
+  $('scroll').scrollTop = 0;
+}
+document.querySelector('nav.tabs').addEventListener('click', e => { const b = e.target.closest('button[data-tab]'); if (b) setTab(b.dataset.tab); });
+document.addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (b) setTab(b.dataset.go); });
+
+function renderAll() { recompute(); renderStock(); renderConso(); renderRecipes(); renderSales(); if (D.ui.tab === 'graph') renderGraph(); }
+renderLiq(); renderDens(); renderAll(); setTab(D.ui.tab);
+writeNow(); // enregistre tout de suite la reprise éventuelle d'une ancienne version
+if (D.pendingPay) { setTab('ventes'); showPayWait(); }
+})();
+</script>
+</body>
+</html>

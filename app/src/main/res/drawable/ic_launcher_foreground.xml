@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bouteille verte sur fond blanc, filet vert façon étiquette L'Eau de Là -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:strokeColor="#FF3F8A37" android:strokeWidth="1.6" android:fillColor="#00000000"
+        android:pathData="M30,26 L78,26 L78,82 L30,82 Z" />
+    <path android:fillColor="#FF3F8A37"
+        android:pathData="M50,32 L58,32 L58,34 L57.2,34 L57.2,43 C57.2,45.5 64,48 64,55 L64,74 C64,75.2 63,76 62,76 L46,76 C45,76 44,75.2 44,74 L44,55 C44,48 50.8,45.5 50.8,43 L50.8,34 L50,34 Z" />
+    <path android:fillColor="#FFFBFBF6"
+        android:pathData="M46.5,56 L61.5,56 L61.5,68 L46.5,68 Z" />
+    <path android:fillColor="#FFB8913A"
+        android:pathData="M48,66 L50,63 L52,63.5 L54,59 L55,59 L56,63 L58.5,64 L60,66 Z" />
+</vector>

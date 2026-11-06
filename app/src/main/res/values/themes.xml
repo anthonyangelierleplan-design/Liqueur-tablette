@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="lq_bg">#FFF1F2EA</color>
+    <color name="lq_icon_bg">#FFFBFBF6</color>
+    <style name="Theme.Liqueurs" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/lq_bg</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:isLightTheme">true</item>
+    </style>
+</resources>
