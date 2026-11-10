@@ -238,6 +238,38 @@ svg.chart .avg{stroke:var(--gold);stroke-width:1.2;stroke-dasharray:4 3}
 .top-row .tb div{height:100%;background:var(--green)}
 .top-row span:nth-child(2){font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
 
+/* ---- Validation de la vente ---- */
+.co-lines{display:flex;flex-direction:column;gap:6px;font-size:15px}
+.co-lines div{display:flex;justify-content:space-between;gap:12px}
+.co-lines div > span:last-child{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.paygrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.paygrid button{border:2px solid var(--line);background:var(--bg);border-radius:14px;padding:14px 6px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;font-weight:700;font-size:14.5px;color:var(--ink);min-height:86px;justify-content:center}
+.paygrid svg{width:30px;height:30px;color:var(--muted)}
+.paygrid button[aria-pressed="true"]{border-color:var(--green);background:var(--green-soft);color:var(--green-ink)}
+.paygrid button[aria-pressed="true"] svg{color:var(--green-ink)}
+.co-date{background:var(--gold-soft);color:var(--gold);border-radius:10px;padding:10px 12px;font-size:14px;font-weight:600}
+.change{display:flex;justify-content:space-between;align-items:baseline;font-size:15px}
+.change b{font-family:var(--f-display);font-size:26px;color:var(--green-ink);font-variant-numeric:tabular-nums}
+.change.short b{color:var(--danger)}
+.ok-mark{width:74px;height:74px;border-radius:50%;background:var(--green);color:var(--paper);display:flex;align-items:center;justify-content:center;margin:8px auto 0}
+.ok-mark svg{width:40px;height:40px}
+.ok-text{text-align:center;display:flex;flex-direction:column;gap:4px;align-items:center}
+.ok-text .big .v{font-size:34px}
+
+/* ---- Carte de chaleur article × heure ---- */
+.heat-wrap{overflow-x:auto;margin:0 -6px;padding:0 6px}
+table.heat{border-collapse:separate;border-spacing:3px;font-size:12.5px;font-variant-numeric:tabular-nums}
+table.heat thead th{font-size:11px;color:var(--muted);font-weight:600;text-align:center;padding:0 0 2px}
+table.heat tbody th{position:sticky;left:0;z-index:1;background:var(--paper);text-align:left;font-weight:600;font-size:13px;line-height:1.2;min-width:110px;max-width:150px;padding-right:6px;cursor:pointer}
+table.heat tr.on tbody th,table.heat tr.on th{color:var(--green-ink);text-decoration:underline}
+table.heat td{position:relative;min-width:34px;height:32px;text-align:center;border-radius:6px;background:var(--sunk)}
+table.heat td i{position:absolute;inset:0;border-radius:6px;background:var(--green)}
+table.heat td span{position:relative;font-weight:600}
+table.heat td span.inv{color:var(--paper)}
+table.heat td.tot{background:transparent;font-weight:700;text-align:right;padding-left:8px;white-space:nowrap}
+table.heat tfoot th{position:sticky;left:0;background:var(--paper);text-align:left;font-size:12px;color:var(--muted)}
+table.heat tfoot td{background:transparent;font-weight:700;font-size:12px;color:var(--muted)}
+
 /* ---- Barre d'onglets ---- */
 nav.tabs{flex:0 0 auto;background:var(--paper);border-top:2px solid var(--green);display:grid;grid-template-columns:repeat(6,minmax(0,1fr));height:var(--nav-h)}
 nav.tabs button{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--muted);font-family:var(--f-display);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;min-width:0;padding:0 1px;white-space:nowrap;overflow:hidden}
@@ -471,8 +503,6 @@ nav.tabs button[aria-current="page"] svg{stroke-width:2.1}
       <div class="card sticky-side" id="cart" hidden>
         <div class="sec-head"><h2>Vente en cours</h2><button class="btn ghost small" id="cartClear">Vider</button></div>
         <div id="cartLines"></div>
-        <div class="field"><span class="lbl">Paiement</span>
-          <div class="seg" id="pay"><button type="button" data-v="esp">Espèces</button><button type="button" data-v="cb">Carte SumUp</button><button type="button" data-v="autre">Autre</button></div></div>
         <div class="field"><label class="lbl" for="saleDate">Date de la vente</label>
           <div class="inp"><input id="saleDate" type="date"></div></div>
         <div class="cart-total"><span class="lbl">Total</span><span class="v" id="cartTotal">0,00 €</span></div>
@@ -487,14 +517,21 @@ nav.tabs button[aria-current="page"] svg{stroke-width:2.1}
   <!-- ================= GRAPHIQUE ================= -->
   <section id="v-graph" class="view split" hidden>
     <div class="col-main view">
-    <div class="seg" id="period"><button type="button" data-v="7">7 jours</button><button type="button" data-v="30">30 jours</button><button type="button" data-v="90">90 jours</button></div>
+    <div class="seg" id="period"><button type="button" data-v="1">Aujourd'hui</button><button type="button" data-v="7">7 jours</button><button type="button" data-v="30">30 jours</button><button type="button" data-v="90">90 jours</button></div>
     <div class="stats" id="gStats"></div>
     <div class="card">
-      <div class="sec-head"><h2>Ventes par jour</h2>
+      <div class="sec-head"><h2 id="chartTitle">Ventes par jour</h2>
         <div class="seg unit" id="metric"><button type="button" data-v="ca">€</button><button type="button" data-v="qty">Bouteilles</button></div></div>
+      <div class="seg" id="gView"><button type="button" data-v="day">Par jour</button><button type="button" data-v="hour">Par heure et par article</button></div>
+      <div class="chips" id="gRefs" hidden></div>
       <div class="chart-read" id="chartRead"></div>
       <div id="chart"></div>
-      <p class="note">Barre dorée : aujourd'hui. Pointillé : moyenne par jour. Touche une barre pour voir le détail.</p>
+      <p class="note" id="chartNote"></p>
+    </div>
+    <div class="card" id="heatCard" hidden>
+      <h2>Article × heure</h2>
+      <p class="note" id="heatNote"></p>
+      <div class="heat-wrap" id="heat"></div>
     </div>
     </div>
     <div class="col-side view">
@@ -1157,8 +1194,7 @@ const saleTotal = s => s.items.reduce((t, i) => t + i.qty * i.price, 0);
 const saleQty = s => s.items.reduce((t, i) => t + i.qty, 0);
 const PAY = { esp: 'Espèces', cb: 'Carte SumUp', autre: 'Autre' };
 $('saleDate').value = todayKey(); $('saleDate').max = todayKey();
-const checkoutLabel = tot => !Object.keys(cart).length ? 'Encaisser' : (D.ui.pay === 'cb' && HAS_ANDROID ? `Payer ${eur(tot)} avec SumUp` : `Encaisser ${eur(tot)}`);
-bindSeg('pay', () => D.ui.pay, v => { D.ui.pay = v; updateCartTotals(); });
+const checkoutLabel = tot => !Object.keys(cart).length ? 'Encaisser' : `Encaisser ${eur(tot)}`;
 function renderSales() {
   const has = D.refs.length > 0;
   $('salesEmpty').hidden = has; $('salesMain').hidden = !has;
@@ -1203,15 +1239,59 @@ $('cartLines').addEventListener('input', e => {
   const id = e.target.closest('[data-id]').dataset.id, v = num(e.target.value); cart[id].price = v >= 0 ? v : 0; updateCartTotals();
 });
 $('cartClear').addEventListener('click', () => { cart = {}; renderSales(); });
-$('checkout').addEventListener('click', () => {
-  const lines = Object.entries(cart); if (!lines.length) return;
-  const dk = $('saleDate').value || todayKey();
-  const ts = dk === todayKey() ? Date.now() : (() => { const d = keyToDate(dk); d.setHours(12, 0, 0, 0); return d.getTime(); })();
-  const items = lines.map(([id, l]) => ({ ref: id, name: refLabel(refById(id)), qty: l.qty, price: l.price }));
-  const sale = { id: uid(), ts, items, pay: D.ui.pay };
-  if (sale.pay === 'cb' && HAS_ANDROID) return startSumUp(sale);
-  finalizeSale(sale); toast(`Vente de ${eur(saleTotal(sale))} enregistrée, stock mis à jour`);
-});
+// Encaisser ouvre une fenêtre de validation : récapitulatif, choix obligatoire du paiement, puis confirmation.
+const PAY_ICONS = {
+  esp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 9.5v5M18 9.5v5"/></svg>',
+  cb: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 9.5h19"/><path d="M6 15h4"/></svg>',
+  autre: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16v10H4z"/><path d="M7 11h6M7 14h4"/><path d="M16 11l1.5 1.5L20 10"/></svg>'
+};
+$('checkout').addEventListener('click', () => { if (Object.keys(cart).length) openCheckout(); });
+function openCheckout() {
+  const lines = Object.entries(cart), tot = lines.reduce((t, [, l]) => t + l.qty * l.price, 0);
+  const dk = $('saleDate').value || todayKey(), past = dk !== todayKey();
+  const nb = lines.reduce((t, [, l]) => t + l.qty, 0);
+  openSheet(`
+    <span class="sec-title">Valider la vente</span>
+    <div class="co-lines">${lines.map(([id, l]) => `<div><span>${l.qty} × ${esc(refLabel(refById(id)))}</span><span>${eur(l.qty * l.price)}</span></div>`).join('')}</div>
+    <div class="cart-total"><span class="lbl">Total · ${nb} bouteille${nb > 1 ? 's' : ''}</span><span class="v">${eur(tot)}</span></div>
+    ${past ? `<div class="co-date">Vente datée du ${keyToDate(dk).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</div>` : ''}
+    <div class="field"><span class="lbl">Moyen de paiement</span>
+      <div class="paygrid" id="coPay">${Object.entries(PAY).map(([k, v]) => `<button type="button" data-v="${k}" aria-pressed="false">${PAY_ICONS[k]}${v}</button>`).join('')}</div></div>
+    <div class="field" id="coCash" hidden><label class="lbl" for="coGiven">Montant reçu (facultatif)</label>
+      <div class="inp"><input id="coGiven" inputmode="decimal" placeholder="${nf(tot, 2)}" autocomplete="off"><span>€</span></div>
+      <div class="chips" id="coGivenChips">${[...new Set([Math.ceil(tot / 5) * 5, Math.ceil(tot / 10) * 10, 20, 50, 100].filter(v => v >= tot))].sort((a, b) => a - b).slice(0, 4).map(v => `<button type="button" data-n="${v}">${nfa(v)} €</button>`).join('')}</div>
+      <div class="change" id="coChange" hidden><span>À rendre</span><b></b></div></div>
+    <div class="sheet-actions"><button class="btn ghost" id="coBack">Retour</button><button class="btn" id="coOk" disabled>Choisis le paiement</button></div>`);
+  let pay = null;
+  const paintChange = () => { const g = num($('coGiven').value), z = $('coChange');
+    if (!(g > 0)) { z.hidden = true; return; }
+    z.hidden = false; z.classList.toggle('short', g < tot - 1e-9);
+    z.querySelector('span').textContent = g < tot - 1e-9 ? 'Il manque' : 'À rendre'; z.querySelector('b').textContent = eur(Math.abs(g - tot)); };
+  $('coPay').addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (!b) return;
+    pay = b.dataset.v; $('coPay').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    $('coCash').hidden = pay !== 'esp';
+    const ok = $('coOk'); ok.disabled = false;
+    ok.textContent = pay === 'cb' && HAS_ANDROID ? `Payer ${eur(tot)} avec SumUp` : `Valider · ${PAY[pay]} · ${eur(tot)}`; });
+  $('coGiven').addEventListener('input', paintChange);
+  $('coGivenChips').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $('coGiven').value = nfa(+b.dataset.n); paintChange(); });
+  $('coBack').onclick = closeSheet;
+  $('coOk').onclick = () => {
+    if (!pay) return;
+    const ts = past ? (() => { const d = keyToDate(dk); d.setHours(12, 0, 0, 0); return d.getTime(); })() : Date.now();
+    const items = lines.map(([id, l]) => ({ ref: id, name: refLabel(refById(id)), qty: l.qty, price: l.price }));
+    const sale = { id: uid(), ts, items, pay };
+    if (pay === 'cb' && HAS_ANDROID) return startSumUp(sale);
+    finalizeSale(sale); showSaleOk(sale);
+  };
+}
+function showSaleOk(sale) {
+  openSheet(`<div class="ok-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+    <div class="ok-text"><span class="sec-title">Vente enregistrée</span><div class="big"><span class="v">${eur(saleTotal(sale))}</span></div>
+      <span class="note">${PAY[sale.pay]}${sale.tx ? ' · ' + esc(sale.tx) : ''} · stock mis à jour</span></div>
+    <button class="btn block" id="okClose">Vente suivante</button>`);
+  $('okClose').onclick = closeSheet;
+  const id = sale.id; setTimeout(() => { if ($('okClose') && !$('sheet').hidden && D.sales.some(x => x.id === id)) closeSheet(); }, 2500);
+}
 function finalizeSale(sale, tx) {
   if (tx) sale.tx = tx;
   D.sales.push(sale); cart = {}; writeNow(); renderAll();
@@ -1236,7 +1316,7 @@ window.onSumUpResult = r => {
   const p = D.pendingPay;
   if (!p || !r || r.foreignId !== p.id) { toast('Réponse SumUp ignorée : elle ne correspond à aucun paiement en cours.'); return; }
   D.pendingPay = null; if (!$('sheet').hidden) closeSheet();
-  if (r.status === 'success') { finalizeSale(p, r.txCode || ''); toast(`Paiement SumUp de ${eur(saleTotal(p))} accepté, stock mis à jour`); }
+  if (r.status === 'success') { finalizeSale(p, r.txCode || ''); showSaleOk(p); }
   else { restoreCart(p); writeNow(); renderSales();
     toast(r.status === 'noapp' ? "L'appli SumUp n'est pas installée sur ce téléphone." : `Paiement non abouti${r.message ? ' (' + r.message + ')' : ''}. Aucune vente enregistrée.`); }
 };
@@ -1272,52 +1352,107 @@ $('history').addEventListener('click', e => {
 });
 
 // ================= Graphique =================
-let selDay = null;
-bindSeg('period', () => D.ui.period, v => { D.ui.period = v; selDay = null; renderGraph(); });
+let selDay = null, selHour = null;
+bindSeg('period', () => D.ui.period, v => { D.ui.period = v; selDay = null; selHour = null; if (v === '1') { D.ui.gview = 'hour'; paintGView(); } renderGraph(); });
 bindSeg('metric', () => D.ui.metric, v => { D.ui.metric = v; renderGraph(); });
+const paintGView = bindSeg('gView', () => D.ui.gview || 'day', v => { D.ui.gview = v; selDay = null; selHour = null; renderGraph(); });
+$('gRefs').addEventListener('click', e => { const b = e.target.closest('button[data-name]'); if (!b) return; D.ui.gref = b.dataset.name; selHour = null; persist(); renderGraph(); });
+$('heat').addEventListener('click', e => { const r = e.target.closest('tr[data-name]'); if (!r) return; D.ui.gref = D.ui.gref === r.dataset.name ? '' : r.dataset.name; selHour = null; persist(); renderGraph(); });
 function niceMax(m) { if (m <= 0) return 1; const p = Math.pow(10, Math.floor(Math.log10(m))); for (const f of [1, 2, 2.5, 5, 10]) if (f * p >= m) return f * p; return 10 * p; }
 const barRows = (rows, color) => rows.map(([label, valTxt, share]) => `<div class="top-row"><span>${esc(label)}</span><span>${valTxt}</span><div class="tb"><div style="width:${(share * 100).toFixed(1)}%${color ? ';background:' + color : ''}"></div></div></div>`).join('');
+// Histogramme générique : une barre par case, étiquettes au choix, barre mise en avant (hl) et sélectionnée (sel).
+function drawBars(vals, labelAt, { hl = -1, sel = -1, avg = 0, onPick }) {
+  const n = vals.length, metric = D.ui.metric;
+  const W = Math.max(280, $('chart').clientWidth || 320), H = 210, L = 44, R = 6, T = 10, B = 26;
+  const pw = W - L - R, ph = H - T - B, max = niceMax(Math.max(...vals)), step = pw / n, bw = Math.max(1.5, step * (n <= 14 ? .62 : n <= 31 ? .7 : .8));
+  const y = v => T + ph - (v / max) * ph;
+  let svg = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Histogramme des ventes">`;
+  for (let k = 0; k <= 4; k++) { const v = max * k / 4, yy = y(v);
+    svg += `<line class="grid" x1="${L}" x2="${W - R}" y1="${yy}" y2="${yy}"/><text x="${L - 6}" y="${yy + 3.5}" text-anchor="end">${metric === 'ca' ? nfa(v, 1) + ' €' : nfa(v, 1)}</text>`; }
+  vals.forEach((v, i) => { const x = L + i * step + (step - bw) / 2, h = (v / max) * ph;
+    svg += `<rect class="${i === sel ? 'b sel' : (i === hl ? 'b today' : 'b')}" x="${x.toFixed(2)}" y="${(T + ph - h).toFixed(2)}" width="${bw.toFixed(2)}" height="${Math.max(0, h).toFixed(2)}" rx="${Math.min(3, bw / 3).toFixed(1)}"/>`;
+    const lab = labelAt(i);
+    if (lab) { const cx = L + i * step + step / 2, anc = i === n - 1 && n > 7 ? 'end' : 'middle';
+      svg += `<text x="${(anc === 'end' ? Math.min(W - R, cx + step / 2) : cx).toFixed(1)}" y="${H - 8}" text-anchor="${anc}">${lab}</text>`; } });
+  if (avg > 0) svg += `<line class="avg" x1="${L}" x2="${W - R}" y1="${y(avg)}" y2="${y(avg)}"/>`;
+  svg += `<rect x="${L}" y="${T}" width="${pw}" height="${ph + B}" fill="transparent" id="chartHit"/></svg>`;
+  $('chart').innerHTML = svg;
+  $('chartHit').addEventListener('click', e => { const rect = $('chart').querySelector('svg').getBoundingClientRect();
+    const i = Math.floor(((e.clientX - rect.left) * W / rect.width - L) / step); if (i >= 0 && i < n) onPick(i); });
+}
 function renderGraph() {
-  const n = +D.ui.period, metric = D.ui.metric, days = [], t0 = keyToDate(todayKey());
+  const n = +D.ui.period, metric = D.ui.metric, view = D.ui.gview || 'day', days = [], t0 = keyToDate(todayKey());
   for (let i = n - 1; i >= 0; i--) { const d = new Date(t0); d.setDate(d.getDate() - i); days.push(dayKey(d)); }
   const idx = new Map(days.map((k, i) => [k, i]));
+  const inPeriod = D.sales.filter(s => idx.has(dayKey(new Date(s.ts))));
   const ca = new Array(n).fill(0), qty = new Array(n).fill(0), cnt = new Array(n).fill(0), prod = new Map(), pays = new Map();
-  for (const s of D.sales) { const i = idx.get(dayKey(new Date(s.ts))); if (i === undefined) continue;
+  for (const s of inPeriod) { const i = idx.get(dayKey(new Date(s.ts)));
     ca[i] += saleTotal(s); qty[i] += saleQty(s); cnt[i]++; pays.set(s.pay, (pays.get(s.pay) || 0) + saleTotal(s));
     for (const it of s.items) { const p = prod.get(it.name) || { qty: 0, ca: 0 }; p.qty += it.qty; p.ca += it.qty * it.price; prod.set(it.name, p); } }
   const sum = a => a.reduce((x, y) => x + y, 0), tCa = sum(ca), tQty = sum(qty), tCnt = sum(cnt);
+  const val = (q, c) => metric === 'ca' ? c : q;
+  const fmt = metric === 'ca' ? eur : (x => nfa(x, 1) + ' bout.');
   $('gStats').innerHTML = `
     <div class="stat"><span class="v">${eur(tCa)}</span><span class="k">Chiffre d'affaires</span></div>
     <div class="stat"><span class="v">${nf(tQty, 0)}</span><span class="k">Bouteilles vendues</span></div>
     <div class="stat"><span class="v">${tCnt}</span><span class="k">Ventes</span></div>
     <div class="stat"><span class="v">${tCnt ? eur(tCa / tCnt) : '—'}</span><span class="k">Panier moyen</span></div>`;
-  const vals = metric === 'ca' ? ca : qty, fmt = metric === 'ca' ? eur : (x => nfa(x, 1) + ' bout.');
-  const W = Math.max(280, $('chart').clientWidth || 320), H = 210, L = 44, R = 6, T = 10, B = 26;
-  const pw = W - L - R, ph = H - T - B, max = niceMax(Math.max(...vals)), step = pw / n, bw = Math.max(1.5, step * (n <= 7 ? .58 : n <= 30 ? .7 : .8));
-  const y = v => T + ph - (v / max) * ph;
-  let svg = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Ventes par jour">`;
-  for (let k = 0; k <= 4; k++) { const v = max * k / 4, yy = y(v);
-    svg += `<line class="grid" x1="${L}" x2="${W - R}" y1="${yy}" y2="${yy}"/><text x="${L - 6}" y="${yy + 3.5}" text-anchor="end">${metric === 'ca' ? nfa(v, 1) + ' €' : nfa(v, 1)}</text>`; }
-  const every = n <= 7 ? 1 : n <= 30 ? 5 : 15;
-  days.forEach((k, i) => { const x = L + i * step + (step - bw) / 2, h = (vals[i] / max) * ph;
-    svg += `<rect class="${k === selDay ? 'b sel' : (i === n - 1 ? 'b today' : 'b')}" x="${x.toFixed(2)}" y="${(T + ph - h).toFixed(2)}" width="${bw.toFixed(2)}" height="${Math.max(0, h).toFixed(2)}" rx="${Math.min(3, bw / 3).toFixed(1)}"/>`;
-    if ((n - 1 - i) % every === 0) { const d = keyToDate(k);
-      const lab = n <= 7 ? d.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '') + ' ' + d.getDate() : d.getDate() + ' ' + d.toLocaleDateString('fr-FR', { month: 'short' }).replace('.', '');
-      const cx = L + i * step + step / 2, anc = i === n - 1 && n > 7 ? 'end' : 'middle';
-      svg += `<text x="${(anc === 'end' ? Math.min(W - R, cx + step / 2) : cx).toFixed(1)}" y="${H - 8}" text-anchor="${anc}">${lab}</text>`; } });
-  const avg = sum(vals) / n;
-  if (avg > 0) svg += `<line class="avg" x1="${L}" x2="${W - R}" y1="${y(avg)}" y2="${y(avg)}"/>`;
-  svg += `<rect x="${L}" y="${T}" width="${pw}" height="${ph + B}" fill="transparent" id="chartHit"/></svg>`;
-  $('chart').innerHTML = svg;
-  if (selDay && idx.has(selDay)) { const i = idx.get(selDay);
-    $('chartRead').innerHTML = `<span>${keyToDate(selDay).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</span><b>${eur(ca[i])} · ${nf(qty[i], 0)} bout.</b>`; }
-  else $('chartRead').innerHTML = `<span>Moyenne par jour</span><b>${fmt(avg)}</b>`;
-  $('chartHit').addEventListener('click', e => { const rect = $('chart').querySelector('svg').getBoundingClientRect();
-    const i = Math.floor(((e.clientX - rect.left) * W / rect.width - L) / step); if (i < 0 || i >= n) return;
-    selDay = selDay === days[i] ? null : days[i]; renderGraph(); });
-  const plist = [...prod.entries()].sort((a, b) => b[1].ca - a[1].ca || b[1].qty - a[1].qty);
-  const pmax = Math.max(1e-9, ...plist.map(([, p]) => metric === 'ca' ? p.ca : p.qty));
-  $('topList').innerHTML = plist.length ? barRows(plist.map(([nm, p]) => [nm, metric === 'ca' ? eur(p.ca) : nf(p.qty, 0) + ' bout.', (metric === 'ca' ? p.ca : p.qty) / pmax])) : `<p class="note">Aucune vente sur cette période.</p>`;
+  const plist = [...prod.entries()].sort((a, b) => val(b[1].qty, b[1].ca) - val(a[1].qty, a[1].ca));
+  const periodTxt = n === 1 ? "aujourd'hui" : `sur ${n} jours`;
+
+  $('gRefs').hidden = view !== 'hour'; $('heatCard').hidden = view !== 'hour';
+  if (view === 'day') {
+    $('chartTitle').textContent = 'Ventes par jour';
+    const vals = metric === 'ca' ? ca : qty, every = n <= 7 ? 1 : n <= 30 ? 5 : 15;
+    const sel = selDay && idx.has(selDay) ? idx.get(selDay) : -1;
+    drawBars(vals, i => { if ((n - 1 - i) % every) return ''; const d = keyToDate(days[i]);
+      return n <= 7 ? d.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '') + ' ' + d.getDate() : d.getDate() + ' ' + d.toLocaleDateString('fr-FR', { month: 'short' }).replace('.', ''); },
+      { hl: n - 1, sel, avg: sum(vals) / n, onPick: i => { selDay = selDay === days[i] ? null : days[i]; renderGraph(); } });
+    $('chartRead').innerHTML = sel >= 0 ? `<span>${keyToDate(selDay).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</span><b>${eur(ca[sel])} · ${nf(qty[sel], 0)} bout.</b>`
+      : `<span>Moyenne par jour</span><b>${fmt(sum(vals) / n)}</b>`;
+    $('chartNote').textContent = "Barre dorée : aujourd'hui. Pointillé : moyenne par jour. Touche une barre pour voir le détail.";
+  } else {
+    // ---- Par heure, pour tous les articles ou un seul ----
+    const names = plist.map(p => p[0]);
+    if (D.ui.gref && !names.includes(D.ui.gref)) D.ui.gref = '';
+    const ref = D.ui.gref || '';
+    const byHour = new Map(); // nom -> { q: [24], c: [24] }
+    const allQ = new Array(24).fill(0), allC = new Array(24).fill(0);
+    for (const s of inPeriod) { const h = new Date(s.ts).getHours();
+      for (const it of s.items) { let e = byHour.get(it.name); if (!e) { e = { q: new Array(24).fill(0), c: new Array(24).fill(0) }; byHour.set(it.name, e); }
+        e.q[h] += it.qty; e.c[h] += it.qty * it.price; allQ[h] += it.qty; allC[h] += it.qty * it.price; } }
+    const used = allQ.map((v, h) => v > 0 ? h : -1).filter(h => h >= 0);
+    const h0 = Math.min(9, ...used), h1 = Math.max(19, ...used), hours = [];
+    for (let h = h0; h <= h1; h++) hours.push(h);
+    const src = ref ? byHour.get(ref) : { q: allQ, c: allC };
+    const vals = hours.map(h => val(src.q[h], src.c[h]));
+    const nowH = new Date().getHours(), hl = n === 1 ? hours.indexOf(nowH) : -1;
+    const sel = selHour !== null ? hours.indexOf(selHour) : -1;
+    $('chartTitle').textContent = 'Ventes par heure';
+    $('gRefs').innerHTML = `<button type="button" data-name="" aria-pressed="${!ref}">Tous les articles</button>` +
+      names.map(nm => `<button type="button" data-name="${esc(nm)}" aria-pressed="${nm === ref}">${esc(nm)}</button>`).join('');
+    drawBars(vals, i => hours.length <= 13 || i % 2 === 0 ? hours[i] + 'h' : '',
+      { hl, sel, onPick: i => { selHour = selHour === hours[i] ? null : hours[i]; renderGraph(); } });
+    const best = vals.length ? vals.indexOf(Math.max(...vals)) : -1;
+    if (sel >= 0) { const h = hours[sel];
+      $('chartRead').innerHTML = `<span>${h}h – ${h + 1}h${ref ? ' · ' + esc(ref) : ''}</span><b>${eur(src.c[h])} · ${nf(src.q[h], 0)} bout.</b>`; }
+    else if (best >= 0 && vals[best] > 0) $('chartRead').innerHTML = `<span>Meilleure heure${ref ? ' · ' + esc(ref) : ''}</span><b>${hours[best]}h – ${hours[best] + 1}h · ${fmt(vals[best])}</b>`;
+    else $('chartRead').innerHTML = `<span>Aucune vente ${periodTxt}${ref ? ' pour ' + esc(ref) : ''}</span><b></b>`;
+    $('chartNote').textContent = (n === 1 ? "Barre dorée : l'heure en cours. " : `Cumul ${periodTxt}, toutes journées confondues. `) + 'Choisis un article au-dessus, puis touche une barre pour le détail.';
+    // ---- Carte de chaleur : une ligne par article, une colonne par heure ----
+    const rows = names.map(nm => { const e = byHour.get(nm); const arr = hours.map(h => val(e.q[h], e.c[h])); return [nm, arr, sum(arr)]; });
+    const cmax = Math.max(1e-9, ...rows.flatMap(r => r[1]));
+    const cell = v => metric === 'ca' ? (v >= 1000 ? nfa(v / 1000, 1) + 'k' : nfa(v, 0)) : nfa(v, 0);
+    $('heatNote').textContent = rows.length ? `${metric === 'ca' ? 'Chiffre d’affaires en €' : 'Bouteilles vendues'} par heure, ${periodTxt}. Plus la case est foncée, plus l'heure a été forte. Touche un article pour l'afficher dans le graphique.` : '';
+    $('heat').innerHTML = !rows.length ? `<p class="note">Aucune vente ${periodTxt}.</p>` : `<table class="heat">
+      <thead><tr><th></th>${hours.map(h => `<th>${h}h</th>`).join('')}<th>Total</th></tr></thead>
+      <tbody>${rows.map(([nm, arr, t]) => `<tr data-name="${esc(nm)}"${nm === ref ? ' class="on"' : ''}><th>${esc(nm)}</th>${arr.map(v => v > 0
+        ? `<td><i style="opacity:${(0.18 + 0.82 * v / cmax).toFixed(2)}"></i><span${v / cmax > 0.5 ? ' class="inv"' : ''}>${cell(v)}</span></td>` : '<td></td>').join('')}<td class="tot">${metric === 'ca' ? eur(t) : nfa(t, 0)}</td></tr>`).join('')}</tbody>
+      <tfoot><tr><th>Total</th>${hours.map(h => `<td>${cell(val(allQ[h], allC[h])) === '0' ? '' : cell(val(allQ[h], allC[h]))}</td>`).join('')}<td class="tot">${metric === 'ca' ? eur(tCa) : nfa(tQty, 0)}</td></tr></tfoot></table>`;
+  }
+
+  const pmax = Math.max(1e-9, ...plist.map(([, p]) => val(p.qty, p.ca)));
+  $('topList').innerHTML = plist.length ? barRows(plist.map(([nm, p]) => [nm, metric === 'ca' ? eur(p.ca) : nf(p.qty, 0) + ' bout.', val(p.qty, p.ca) / pmax])) : `<p class="note">Aucune vente sur cette période.</p>`;
   const paylist = Object.keys(PAY).map(k => [k, pays.get(k) || 0]).filter(([, v]) => v > 0);
   $('payList').innerHTML = paylist.length ? barRows(paylist.map(([k, v]) => [PAY[k], `${eur(v)} · ${nf(v / tCa * 100, 0)} %`, v / tCa]), 'var(--slate)') : `<p class="note">Aucune vente sur cette période.</p>`;
   const outs = new Map();
@@ -1464,7 +1599,7 @@ const TABS = {
   stock: ['Stock', 'Produits finis'],
   conso: ['Consommables', 'Bouteilles, bouchons, étiquettes…'],
   ventes: ['Ventes', 'Encaisser & historique'],
-  graph: ['Graphique', 'Ventes par jour']
+  graph: ['Graphique', 'Ventes & tendances']
 };
 function setTab(t) {
   if (!TABS[t]) t = 'calcul';
