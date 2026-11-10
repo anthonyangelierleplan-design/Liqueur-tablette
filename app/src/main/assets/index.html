@@ -295,6 +295,21 @@ svg.chart .avg{stroke:var(--gold);stroke-width:1.2;stroke-dasharray:4 3}
 .zlist b{font-variant-numeric:tabular-nums}
 .locked{background:var(--sunk);border-radius:10px;padding:10px 12px;font-size:13.5px;color:var(--muted)}
 
+/* ---- Code manager ---- */
+.pin-dots{display:flex;justify-content:center;gap:16px;margin:6px 0 2px}
+.pin-dots i{width:18px;height:18px;border-radius:50%;border:2px solid var(--green);background:transparent}
+.pin-dots i.on{background:var(--green)}
+.pin-dots.shake{animation:shake .35s}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.pin-msg{text-align:center;min-height:20px;font-size:14px;color:var(--danger);font-weight:600}
+.pinpad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;max-width:320px;width:100%;margin:0 auto}
+.pinpad button{height:62px;border-radius:14px;border:1px solid var(--line);background:var(--bg);font-size:26px;font-weight:600;font-variant-numeric:tabular-nums}
+.pinpad button:active{background:var(--green-soft)}
+.pinpad .ghost{border:0;background:transparent;font-size:15px;color:var(--muted)}
+.pin-head{text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center}
+.pin-head svg{width:34px;height:34px;color:var(--green-ink)}
+.caisse-bar.locked .cb-amt{font-family:var(--f-body);font-size:14px;font-weight:700;color:var(--muted)}
+
 /* ---- Carte de chaleur article × heure ---- */
 .heat-wrap{overflow-x:auto;margin:0 -6px;padding:0 6px}
 table.heat{border-collapse:separate;border-spacing:3px;font-size:12.5px;font-variant-numeric:tabular-nums}
@@ -627,6 +642,7 @@ function normalize(o) {
   if (!o || typeof o !== 'object') return d;
   d.v = o.v || 1;
   if (o.del && typeof o.del === 'object') d.del = o.del;
+  if (o.sec && typeof o.sec === 'object' && o.sec.hash) d.sec = o.sec;
   const arr = (k, ok) => { if (Array.isArray(o[k])) d[k] = o[k].filter(ok); };
   arr('refs', r => r && r.id && r.name); arr('sales', s => s && s.id && Array.isArray(s.items));
   arr('consos', c => c && c.id && c.name); arr('moves', m => m && m.id && m.item);
@@ -1538,7 +1554,7 @@ function openBackup() {
         m.reason ? ((m.kind === 'ref' ? REASONS_REF : REASONS_CONSO)[m.reason] || m.reason) : '', m.note || '']);
       (m.uses || []).forEach(u => rows.push([dayKey(d), hm(d), u.name, 'Consommable', nfa(-u.qty, 3), 'Consommé par mise en bouteille', '', m.name])); });
     exportFile(`eau-de-la-mouvements-${todayKey()}.csv`, 'text/csv', csv(rows)); };
-  $('bCsvZ').onclick = exportZCsv;
+  $('bCsvZ').onclick = () => askPin({ title: 'Export des clôtures Z', cancel: 'Retour', onCancel: openBackup, ok: () => { exportZCsv(); openBackup(); } });
   $('bImport').onclick = () => { if (HAS_ANDROID) Android.importFile(); else toast("La restauration fonctionne dans l'appli Android."); };
 }
 function exportFile(name, mime, content) {
@@ -1555,7 +1571,7 @@ window.onImport = text => {
   $('bZone').innerHTML = `<div class="confirm round">Remplacer les données actuelles par cette sauvegarde (${p.refs.length} produits, ${p.consos.length} consommables, ${p.recipes.length} recettes, ${p.sales.length} ventes) ?
     <button class="btn danger" id="bYes">Remplacer</button><button class="btn ghost" id="bNo">Annuler</button></div>`;
   $('bNo').onclick = () => { pendingImport = null; $('bZone').innerHTML = ''; };
-  $('bYes').onclick = () => { ['refs', 'sales', 'consos', 'moves', 'recipes', 'cdays', 'cmoves', 'del'].forEach(k => D[k] = pendingImport[k]); pendingImport = null; cart = {};
+  $('bYes').onclick = () => { ['refs', 'sales', 'consos', 'moves', 'recipes', 'cdays', 'cmoves', 'del'].forEach(k => D[k] = pendingImport[k]); if (pendingImport.sec) D.sec = pendingImport.sec; pendingImport = null; cart = {};
     writeNow(); closeSheet(); renderAll(); toast('Sauvegarde restaurée'); };
 };
 
@@ -1589,20 +1605,78 @@ function defaultFond(k) {
   return { v: dayReport(prev.day).theo, why: `caisse théorique du ${keyToDate(prev.day).toLocaleDateString('fr-FR')} (non clôturée)` };
 }
 const ICON_CAISSE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M3 14h18"/><path d="M6 10V5h12v5"/><path d="M9 7.5h6"/><path d="M11 17h2"/></svg>';
+const ICON_LOCK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><path d="M12 14.5v2.5"/></svg>';
 function renderCaisseBar() {
   const k = todayKey(), r = dayReport(k), el = $('caisseBar');
-  if (r.cd?.z) { el.className = 'caisse-bar';
-    el.innerHTML = `${ICON_CAISSE}<span class="cb-txt"><b>Caisse clôturée</b><small>Z n°${zNumber(k)} · ${eur(r.total)} de ventes</small></span><span class="cb-amt">${eur(r.cd.z.counted)}</span>`; }
-  else if (r.cd) { el.className = 'caisse-bar';
-    el.innerHTML = `${ICON_CAISSE}<span class="cb-txt"><b>Caisse</b><small>Fond ${eur(r.fond)} · espèces du jour ${eur(r.byPay.esp)}</small></span><span class="cb-amt">${eur(r.theo)}</span>`; }
-  else { el.className = 'caisse-bar todo';
-    el.innerHTML = `${ICON_CAISSE}<span class="cb-txt"><b>Caisse non ouverte</b><small>Indique le fond de caisse du jour</small></span><span class="cb-amt">Ouvrir ›</span>`; }
+  // Les montants restent cachés : la caisse est réservée au manager (code à 4 chiffres).
+  el.className = 'caisse-bar locked' + (r.cd ? '' : ' todo');
+  el.innerHTML = `${ICON_LOCK}<span class="cb-txt"><b>${r.cd?.z ? 'Caisse clôturée' : r.cd ? 'Caisse ouverte' : 'Caisse non ouverte'}</b><small>${r.cd?.z ? `Z n°${zNumber(k)}` : r.cd ? 'Réservée au manager' : 'Le manager doit indiquer le fond du jour'}</small></span><span class="cb-amt">${D.sec ? 'Code ›' : 'Créer le code ›'}</span>`;
 }
-$('caisseBar').addEventListener('click', () => cdayOf(todayKey()) ? openCaisse() : openFond(todayKey()));
+$('caisseBar').addEventListener('click', () => askPin({ title: 'Accès à la caisse', ok: () => cdayOf(todayKey()) ? openCaisse() : openFond(todayKey()) }));
 function morningPrompt() {
   const k = todayKey();
   if (!D.refs.length || cdayOf(k) || D.ui.cprompt === k || !$('sheet').hidden || D.pendingPay) return;
-  D.ui.cprompt = k; persist(); openFond(k, true);
+  D.ui.cprompt = k; persist();
+  askPin({ title: 'Bonjour ! Ouverture de caisse', sub: 'Le manager saisit son code pour indiquer le fond de caisse du jour.', cancel: 'Plus tard', ok: () => openFond(k, true) });
+}
+
+// ---- Code manager (4 chiffres) ----
+// Le code n'est jamais stocké en clair : seule son empreinte SHA-256 (avec un sel) est gardée et synchronisée.
+function sha256(str) {
+  const K = [0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  const bytes = [...unescape(encodeURIComponent(str))].map(c => c.charCodeAt(0)), l = bytes.length * 8;
+  bytes.push(0x80); while (bytes.length % 64 !== 56) bytes.push(0);
+  for (let i = 7; i >= 0; i--) bytes.push(i > 3 ? 0 : (l >>> (i * 8)) & 0xff);
+  const H = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19], W = new Array(64);
+  const r = (x, n) => (x >>> n) | (x << (32 - n));
+  for (let o = 0; o < bytes.length; o += 64) {
+    for (let i = 0; i < 16; i++) W[i] = (bytes[o + 4 * i] << 24) | (bytes[o + 4 * i + 1] << 16) | (bytes[o + 4 * i + 2] << 8) | bytes[o + 4 * i + 3];
+    for (let i = 16; i < 64; i++) { const s0 = r(W[i - 15], 7) ^ r(W[i - 15], 18) ^ (W[i - 15] >>> 3), s1 = r(W[i - 2], 17) ^ r(W[i - 2], 19) ^ (W[i - 2] >>> 10); W[i] = (W[i - 16] + s0 + W[i - 7] + s1) | 0; }
+    let [a, b, c, d, e, f, g, h] = H;
+    for (let i = 0; i < 64; i++) { const t1 = (h + (r(e, 6) ^ r(e, 11) ^ r(e, 25)) + ((e & f) ^ (~e & g)) + K[i] + W[i]) | 0, t2 = ((r(a, 2) ^ r(a, 13) ^ r(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) | 0;
+      h = g; g = f; f = e; e = (d + t1) | 0; d = c; c = b; b = a; a = (t1 + t2) | 0; }
+    H[0] = (H[0] + a) | 0; H[1] = (H[1] + b) | 0; H[2] = (H[2] + c) | 0; H[3] = (H[3] + d) | 0; H[4] = (H[4] + e) | 0; H[5] = (H[5] + f) | 0; H[6] = (H[6] + g) | 0; H[7] = (H[7] + h) | 0;
+  }
+  return H.map(x => (x >>> 0).toString(16).padStart(8, '0')).join('');
+}
+const pinHash = (pin, salt) => sha256('eau-de-la|' + salt + '|' + pin);
+let pinFails = 0, pinLockUntil = 0;
+function pinPad({ title, sub = '', cancel = 'Annuler', onCancel = closeSheet, onEnter }) {
+  openSheet(`
+    <div class="pin-head">${ICON_LOCK}<span class="sec-title">${esc(title)}</span>${sub ? `<p class="note">${esc(sub)}</p>` : ''}</div>
+    <div class="pin-dots" id="pinDots"><i></i><i></i><i></i><i></i></div>
+    <div class="pin-msg" id="pinMsg"></div>
+    <div class="pinpad" id="pinPad">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `<button type="button" data-k="${n}">${n}</button>`).join('')}
+      <button type="button" class="ghost" data-k="x">${esc(cancel)}</button><button type="button" data-k="0">0</button><button type="button" class="ghost" data-k="b" aria-label="Effacer">⌫</button></div>`);
+  let code = '';
+  const paint = () => $('pinDots').querySelectorAll('i').forEach((d, i) => d.classList.toggle('on', i < code.length));
+  const api = { fail(msg) { code = ''; paint(); $('pinMsg').textContent = msg; const d = $('pinDots'); d.classList.remove('shake'); void d.offsetWidth; d.classList.add('shake'); }, msg(t) { $('pinMsg').textContent = t; } };
+  $('pinPad').addEventListener('click', e => { const b = e.target.closest('button[data-k]'); if (!b) return; const k = b.dataset.k;
+    if (k === 'x') return onCancel();
+    if (k === 'b') { code = code.slice(0, -1); paint(); return; }
+    if (code.length >= 4) return;
+    code += k; paint(); $('pinMsg').textContent = '';
+    if (code.length === 4) { const c = code; setTimeout(() => onEnter(c, api), 120); } });
+  return api;
+}
+// Demande le code ; s'il n'existe pas encore, propose de le créer.
+function askPin({ title, sub = '', cancel = 'Annuler', onCancel = closeSheet, ok }) {
+  if (!D.sec) return createPin(ok, onCancel);
+  pinPad({ title, sub, cancel, onCancel, onEnter: (c, api) => {
+    if (Date.now() < pinLockUntil) return api.fail(`Trop d'essais. Réessaie dans ${Math.ceil((pinLockUntil - Date.now()) / 1000)} s.`);
+    if (pinHash(c, D.sec.salt) === D.sec.hash) { pinFails = 0; ok(); }
+    else { pinFails++; if (pinFails >= 5) { pinLockUntil = Date.now() + 30000; pinFails = 0; api.fail('Trop d’essais : caisse bloquée 30 secondes.'); } else api.fail('Code incorrect'); }
+  } });
+}
+function createPin(done, onCancel = closeSheet, changing = false) {
+  pinPad({ title: changing ? 'Nouveau code manager' : 'Créer le code manager', sub: 'Choisis un code à 4 chiffres. Il protège la caisse sur tous les appareils synchronisés.', onCancel, cancel: 'Annuler',
+    onEnter: (first, api0) => {
+      if (/^(\d)\1{3}$/.test(first) || ['1234', '4321', '0123', '9876', '2580'].includes(first)) return api0.fail('Code trop simple (0000, 1234…). Choisis-en un autre.');
+      pinPad({ title: 'Confirme le code', sub: 'Tape le même code une seconde fois.', onCancel, cancel: 'Annuler', onEnter: (second, api) => {
+        if (second !== first) return api.fail('Les deux codes sont différents. Recommence.'), setTimeout(() => createPin(done, onCancel, changing), 900);
+        const salt = uid(); D.sec = { salt, hash: pinHash(first, salt), upd: Date.now() }; writeNow(); renderSales(); done();
+      } });
+    } });
 }
 
 // ---- Compteur de billets et pièces ----
@@ -1675,8 +1749,9 @@ function openCaisse() {
     : `<div class="sheet-actions"><button class="btn ghost" id="cFond">Ajuster le fond</button><button class="btn ghost" id="cMove">Entrée / sortie</button></div>
       <div class="sheet-actions"><button class="btn ghost" id="cX">Rapport X</button><button class="btn" id="cZ">Clôturer · Z</button></div>
       <button class="btn ghost block" id="cZHist">Historique des Z</button>`}
-    <button class="btn ghost block" id="cClose">Fermer</button>`);
+    <div class="sheet-actions"><button class="btn ghost" id="cPin">Changer le code manager</button><button class="btn ghost" id="cClose">Fermer</button></div>`);
   $('cClose').onclick = closeSheet;
+  $('cPin').onclick = () => createPin(() => { toast('Nouveau code manager enregistré. Synchronise les autres appareils.'); openCaisse(); }, openCaisse, true);
   $('cZHist').onclick = openZHistory;
   if (z) {
     $('cZView').onclick = () => openReport(k);
@@ -1684,7 +1759,8 @@ function openCaisse() {
       $('cReopenZone').innerHTML = `<div class="confirm round">Rouvrir la journée annule le Z n°${zNumber(k)}. Il faudra refaire la clôture ce soir.
         <button class="btn danger" id="cReYes">Rouvrir</button><button class="btn ghost" id="cReNo">Garder le Z</button></div>`;
       $('cReNo').onclick = openCaisse;
-      $('cReYes').onclick = () => { delete r.cd.z; r.cd.upd = Date.now(); writeNow(); renderSales(); toast('Journée rouverte'); openCaisse(); };
+      $('cReYes').onclick = () => askPin({ title: 'Rouvrir la journée', sub: `Le Z n°${zNumber(k)} sera annulé.`, cancel: 'Retour', onCancel: openCaisse,
+        ok: () => { delete r.cd.z; r.cd.upd = Date.now(); writeNow(); renderSales(); toast('Journée rouverte'); openCaisse(); } });
     };
   } else {
     $('cFond').onclick = () => openFond(k);
@@ -1754,16 +1830,15 @@ function openZ(k) {
     const c = num($('zCount').value), keep = num($('zKeep').value);
     if (!(c >= 0)) return sheetErr('Compte les espèces ou indique le total compté.');
     if (!(keep >= 0)) return sheetErr('Indique le fond gardé pour demain (0 si tu vides la caisse).');
-    $('zZone').outerHTML = `<div class="confirm round" id="zZone">Clôture définitive : les ventes du jour ne pourront plus être annulées.
-      <button class="btn" id="zYes">Clôturer</button><button class="btn ghost" id="zNo">Retour</button></div>`;
-    $('zNo').onclick = () => openZ(k);
-    $('zYes').onclick = () => {
+    const vals = { c, keep, detail };
+    askPin({ title: 'Confirmer la clôture Z', sub: `Clôture définitive du ${keyToDate(k).toLocaleDateString('fr-FR')} : les ventes du jour ne pourront plus être annulées.`, cancel: 'Retour', onCancel: () => openZ(k), ok: () => {
+      const { c, keep, detail } = vals;
       let cd = cdayOf(k); if (!cd) { cd = { id: 'cd-' + k, day: k, fond: 0, opened: Date.now() }; D.cdays.push(cd); }
       const rr = dayReport(k);
       cd.z = { ts: Date.now(), counted: round2(c), keep: round2(keep), detail, theo: rr.theo, ecart: round2(c - rr.theo),
         snap: { n: rr.n, bottles: rr.bottles, total: rr.total, byPay: rr.byPay, nPay: rr.nPay, prod: rr.prod, fond: rr.fond, apports: rr.apports, retraits: rr.retraits, first: rr.first, last: rr.last } };
       cd.upd = Date.now(); writeNow(); renderSales(); toast(`Journée clôturée · Z n°${zNumber(k)}`); openReport(k);
-    };
+    } });
   };
 }
 
@@ -1900,9 +1975,10 @@ function mergeRemote(o) {
   const refs = lww(D.refs, R.refs), consos = lww(D.consos, R.consos), recipes = lww(D.recipes, R.recipes);
   const sales = uni(D.sales, R.sales), moves = uni(D.moves, R.moves);
   const cdays = lww(D.cdays, R.cdays), cmoves = uni(D.cmoves, R.cmoves);
+  let pinChanged = 0; if (R.sec && (!D.sec || (R.sec.upd || 0) > (D.sec.upd || 0))) { D.sec = R.sec; pinChanged = 1; }
   Object.assign(D, { refs: refs.list, consos: consos.list, recipes: recipes.list, sales: sales.list, moves: moves.list, cdays: cdays.list, cmoves: cmoves.list, del });
   return [['Ventes reçues', sales.c], ['Mouvements de stock reçus', moves.c], ['Produits ajoutés ou modifiés', refs.c],
-    ['Consommables ajoutés ou modifiés', consos.c], ['Recettes ajoutées ou modifiées', recipes.c], ['Journées de caisse mises à jour', cdays.c], ["Entrées et sorties d'argent reçues", cmoves.c], ['Éléments supprimés', gone]].filter(([, v]) => v > 0);
+    ['Consommables ajoutés ou modifiés', consos.c], ['Recettes ajoutées ou modifiées', recipes.c], ['Journées de caisse mises à jour', cdays.c], ["Entrées et sorties d'argent reçues", cmoves.c], ['Code manager mis à jour', pinChanged], ['Éléments supprimés', gone]].filter(([, v]) => v > 0);
 }
 window.onSyncData = text => {
   let o = null; try { o = JSON.parse(text); } catch (e) {}
