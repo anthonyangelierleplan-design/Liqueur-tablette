@@ -256,6 +256,45 @@ svg.chart .avg{stroke:var(--gold);stroke-width:1.2;stroke-dasharray:4 3}
 .ok-text{text-align:center;display:flex;flex-direction:column;gap:4px;align-items:center}
 .ok-text .big .v{font-size:34px}
 
+/* ---- Caisse ---- */
+.caisse-bar{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--paper);border:1.5px solid var(--green);border-radius:12px;padding:10px 14px;min-height:58px}
+.caisse-bar svg{width:26px;height:26px;color:var(--green-ink);flex:0 0 auto}
+.caisse-bar .cb-txt{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}
+.caisse-bar .cb-txt b{font-family:var(--f-display);font-weight:400;font-size:15px;letter-spacing:.06em;text-transform:uppercase}
+.caisse-bar .cb-txt small{font-size:12.5px;color:var(--muted)}
+.caisse-bar .cb-amt{font-family:var(--f-display);font-size:22px;color:var(--green-ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.caisse-bar.todo{border-style:dashed;border-color:var(--gold);background:var(--gold-soft)}
+.caisse-bar.todo .cb-amt{font-family:var(--f-body);font-size:14px;font-weight:700;color:var(--gold)}
+.ledger{display:flex;flex-direction:column;font-size:15px}
+.ledger div{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:8px 0;border-top:1px solid var(--line)}
+.ledger div:first-child{border-top:0}
+.ledger div > span:last-child{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ledger .sum{border-top:1.5px solid var(--green)}
+.ledger .sum > span:first-child{font-weight:700}
+.ledger .sum > span:last-child{font-family:var(--f-display);font-size:24px;font-weight:400;color:var(--green-ink)}
+.ledger small{color:var(--muted);font-size:12px;display:block;font-weight:400}
+.ledger .sub{padding:4px 0 4px 14px;font-size:14px;color:var(--muted);border-top:0}
+.ledger .sub > span:last-child{font-weight:500}
+.ecart{font-weight:700;border-radius:999px;padding:2px 10px;font-size:13px}
+.ecart.ok{background:var(--green-soft);color:var(--green-ink)}
+.ecart.bad{background:var(--danger-bg);color:var(--danger)}
+.ecart.mid{background:var(--gold-soft);color:var(--gold)}
+.denoms{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px 16px}
+.den-cap{grid-column:1/-1;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-top:6px}
+.den{display:grid;grid-template-columns:56px 36px 1fr 36px 74px;gap:6px;align-items:center}
+.den span{font-weight:600;font-variant-numeric:tabular-nums}
+.den button{width:36px;height:36px;border-radius:9px;border:1px solid var(--line);background:var(--bg);font-size:18px;line-height:1}
+.den input{width:100%;min-width:0;border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:7px 4px;text-align:center;font-size:15.5px;font-variant-numeric:tabular-nums}
+.den b{text-align:right;font-variant-numeric:tabular-nums;font-size:13.5px;color:var(--muted)}
+.zhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.zno{font-family:var(--f-display);font-size:30px;color:var(--green-ink)}
+.ztag{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:var(--sunk);color:var(--muted)}
+.ztag.z{background:var(--green);color:var(--paper)}
+.zlist button{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;border:0;border-top:1px solid var(--line);background:transparent;padding:11px 2px;font-size:14.5px}
+.zlist button:first-child{border-top:0}
+.zlist b{font-variant-numeric:tabular-nums}
+.locked{background:var(--sunk);border-radius:10px;padding:10px 12px;font-size:13.5px;color:var(--muted)}
+
 /* ---- Carte de chaleur article × heure ---- */
 .heat-wrap{overflow-x:auto;margin:0 -6px;padding:0 6px}
 table.heat{border-collapse:separate;border-spacing:3px;font-size:12.5px;font-variant-numeric:tabular-nums}
@@ -494,6 +533,7 @@ nav.tabs button[aria-current="page"] svg{stroke-width:2.1}
       <button class="btn" data-go="stock">Aller au stock</button>
     </div>
     <div id="salesMain" class="view">
+      <button type="button" class="caisse-bar" id="caisseBar"></button>
       <div class="sec-head"><span class="sec-title">Produits</span><span class="note">Touche pour ajouter</span></div>
       <div class="tiles" id="tiles"></div>
     </div>
@@ -577,7 +617,7 @@ const round3 = x => Math.round(x * 1000) / 1000;
 // ================= Données =================
 const HAS_ANDROID = typeof window.Android !== 'undefined';
 const DEF = {
-  v: 4, refs: [], sales: [], consos: [], moves: [], recipes: [], del: {},
+  v: 4, refs: [], sales: [], consos: [], moves: [], recipes: [], cdays: [], cmoves: [], del: {},
   calc: { baseAbv: '96,2', targetAbv: '25', sugar: '300', sugarUnit: 'gl', basis: 'final', amount: '1', amountUnit: 'L', mode: 'recette', dAbv: '96,2', cAmt: '500', cUnit: 'mL' },
   ui: { tab: 'calcul', period: '30', metric: 'ca', pay: 'esp' }
 };
@@ -591,6 +631,7 @@ function normalize(o) {
   arr('refs', r => r && r.id && r.name); arr('sales', s => s && s.id && Array.isArray(s.items));
   arr('consos', c => c && c.id && c.name); arr('moves', m => m && m.id && m.item);
   arr('recipes', r => r && r.id && r.name);
+  arr('cdays', c => c && c.id && c.day); arr('cmoves', m => m && m.id && isFinite(m.amount));
   d.refs.forEach(r => { if (!Array.isArray(r.bom)) r.bom = []; });
   d.recipes.forEach(r => { if (!Array.isArray(r.ings)) r.ings = []; });
   Object.assign(d.calc, o.calc || {}); Object.assign(d.ui, o.ui || {});
@@ -1197,6 +1238,7 @@ $('saleDate').value = todayKey(); $('saleDate').max = todayKey();
 const checkoutLabel = tot => !Object.keys(cart).length ? 'Encaisser' : `Encaisser ${eur(tot)}`;
 function renderSales() {
   const has = D.refs.length > 0;
+  renderCaisseBar();
   $('salesEmpty').hidden = has; $('salesMain').hidden = !has;
   if (!has) { $('cart').hidden = true; $('cartEmpty').hidden = true; }
   for (const id of Object.keys(cart)) if (!refById(id)) delete cart[id];
@@ -1249,6 +1291,10 @@ $('checkout').addEventListener('click', () => { if (Object.keys(cart).length) op
 function openCheckout() {
   const lines = Object.entries(cart), tot = lines.reduce((t, [, l]) => t + l.qty * l.price, 0);
   const dk = $('saleDate').value || todayKey(), past = dk !== todayKey();
+  if (zOf(dk)) return openSheet(`<span class="sec-title">Journée clôturée</span>
+    <div class="msg">La caisse du ${keyToDate(dk).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} a déjà été clôturée (Z n°${zNumber(dk)}). Aucune vente ne peut plus y être ajoutée.</div>
+    <p class="note">${past ? 'Choisis une autre date de vente.' : 'Si tu dois encore vendre aujourd’hui, rouvre la journée depuis le bandeau Caisse : le Z sera annulé et à refaire.'}</p>
+    <button class="btn block" id="zBlockOk">Compris</button>`), $('zBlockOk').onclick = closeSheet;
   const nb = lines.reduce((t, [, l]) => t + l.qty, 0);
   openSheet(`
     <span class="sec-title">Valider la vente</span>
@@ -1347,7 +1393,9 @@ $('history').addEventListener('click', e => {
     row.insertAdjacentHTML('afterend', `<div class="confirm" data-sale="${s.id}">Annuler cette vente ? Les bouteilles reviennent dans le stock.${s.tx ? ' Pense à rembourser aussi dans SumUp.' : ''}
       <button class="btn danger" data-act="delYes">Annuler la vente</button><button class="btn ghost" data-act="delNo">Garder</button></div>`);
   } else if (b.dataset.act === 'delNo') row.remove();
-  else if (b.dataset.act === 'delYes') { tomb(s.id);
+  else if (b.dataset.act === 'delYes') {
+    const zk = dayKey(new Date(s.ts)); if (zOf(zk)) { row.remove(); return toast(`Journée clôturée (Z n°${zNumber(zk)}) : cette vente ne peut plus être annulée.`); }
+    tomb(s.id);
     D.sales = D.sales.filter(x => x.id !== s.id); writeNow(); renderAll(); toast('Vente annulée, stock remis à jour'); }
 });
 
@@ -1472,6 +1520,7 @@ function openBackup() {
     <button class="btn block" id="bExport">Enregistrer une sauvegarde</button>
     <button class="btn ghost block" id="bCsv">Exporter les ventes (tableur CSV)</button>
     <button class="btn ghost block" id="bCsvM">Exporter les mouvements de stock (CSV)</button>
+    <button class="btn ghost block" id="bCsvZ">Exporter les clôtures de caisse Z (CSV)</button>
     <button class="btn ghost block" id="bImport">Restaurer une sauvegarde</button>
     <div id="bZone"></div>
     <button class="btn ghost block" id="bClose">Fermer</button>`);
@@ -1489,6 +1538,7 @@ function openBackup() {
         m.reason ? ((m.kind === 'ref' ? REASONS_REF : REASONS_CONSO)[m.reason] || m.reason) : '', m.note || '']);
       (m.uses || []).forEach(u => rows.push([dayKey(d), hm(d), u.name, 'Consommable', nfa(-u.qty, 3), 'Consommé par mise en bouteille', '', m.name])); });
     exportFile(`eau-de-la-mouvements-${todayKey()}.csv`, 'text/csv', csv(rows)); };
+  $('bCsvZ').onclick = exportZCsv;
   $('bImport').onclick = () => { if (HAS_ANDROID) Android.importFile(); else toast("La restauration fonctionne dans l'appli Android."); };
 }
 function exportFile(name, mime, content) {
@@ -1505,9 +1555,278 @@ window.onImport = text => {
   $('bZone').innerHTML = `<div class="confirm round">Remplacer les données actuelles par cette sauvegarde (${p.refs.length} produits, ${p.consos.length} consommables, ${p.recipes.length} recettes, ${p.sales.length} ventes) ?
     <button class="btn danger" id="bYes">Remplacer</button><button class="btn ghost" id="bNo">Annuler</button></div>`;
   $('bNo').onclick = () => { pendingImport = null; $('bZone').innerHTML = ''; };
-  $('bYes').onclick = () => { ['refs', 'sales', 'consos', 'moves', 'recipes', 'del'].forEach(k => D[k] = pendingImport[k]); pendingImport = null; cart = {};
+  $('bYes').onclick = () => { ['refs', 'sales', 'consos', 'moves', 'recipes', 'cdays', 'cmoves', 'del'].forEach(k => D[k] = pendingImport[k]); pendingImport = null; cart = {};
     writeNow(); closeSheet(); renderAll(); toast('Sauvegarde restaurée'); };
 };
+
+// ================= Caisse : fond, entrées/sorties, rapports X et Z =================
+const round2 = x => Math.round(x * 100) / 100;
+const DENOMS = [100, 50, 20, 10, 5, 2, 1, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01];
+const CASH_REASONS = { retrait: { banque: 'Dépôt en banque', achat: 'Achat / dépense', autre: 'Autre' }, apport: { monnaie: 'Ajout de monnaie', autre: 'Autre' } };
+const longDay = k => keyToDate(k).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+const cdayOf = k => D.cdays.find(c => c.day === k);
+const zOf = k => cdayOf(k)?.z || null;
+const zDays = () => D.cdays.filter(c => c.z).map(c => c.day).sort();
+const zNumber = k => zDays().indexOf(k) + 1;
+const hm = ts => { const d = new Date(ts); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+function dayReport(k) {
+  const sales = D.sales.filter(s => dayKey(new Date(s.ts)) === k).sort((a, b) => a.ts - b.ts);
+  const byPay = { esp: 0, cb: 0, autre: 0 }, nPay = { esp: 0, cb: 0, autre: 0 }, prod = new Map();
+  let total = 0, bottles = 0;
+  for (const s of sales) { const t = saleTotal(s); total += t; byPay[s.pay] = (byPay[s.pay] || 0) + t; nPay[s.pay] = (nPay[s.pay] || 0) + 1;
+    for (const i of s.items) { bottles += i.qty; const p = prod.get(i.name) || { q: 0, c: 0 }; p.q += i.qty; p.c += i.qty * i.price; prod.set(i.name, p); } }
+  const cd = cdayOf(k), fond = cd ? cd.fond : 0;
+  const mv = D.cmoves.filter(m => dayKey(new Date(m.ts)) === k).sort((a, b) => a.ts - b.ts);
+  const apports = mv.filter(m => m.amount > 0).reduce((t, m) => t + m.amount, 0), retraits = mv.filter(m => m.amount < 0).reduce((t, m) => t - m.amount, 0);
+  return { k, sales, n: sales.length, bottles, total: round2(total), byPay, nPay, prod: [...prod.entries()].sort((a, b) => b[1].c - a[1].c),
+    first: sales[0]?.ts, last: sales.at(-1)?.ts, cd, fond, mv, apports: round2(apports), retraits: round2(retraits),
+    theo: round2(fond + byPay.esp + apports - retraits) };
+}
+function defaultFond(k) {
+  const prev = D.cdays.filter(c => c.day < k).sort((a, b) => a.day < b.day ? 1 : -1)[0];
+  if (!prev) return { v: 0, why: '' };
+  if (prev.z) return { v: prev.z.keep, why: `fond gardé à la clôture du ${keyToDate(prev.day).toLocaleDateString('fr-FR')}` };
+  return { v: dayReport(prev.day).theo, why: `caisse théorique du ${keyToDate(prev.day).toLocaleDateString('fr-FR')} (non clôturée)` };
+}
+const ICON_CAISSE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M3 14h18"/><path d="M6 10V5h12v5"/><path d="M9 7.5h6"/><path d="M11 17h2"/></svg>';
+function renderCaisseBar() {
+  const k = todayKey(), r = dayReport(k), el = $('caisseBar');
+  if (r.cd?.z) { el.className = 'caisse-bar';
+    el.innerHTML = `${ICON_CAISSE}<span class="cb-txt"><b>Caisse clôturée</b><small>Z n°${zNumber(k)} · ${eur(r.total)} de ventes</small></span><span class="cb-amt">${eur(r.cd.z.counted)}</span>`; }
+  else if (r.cd) { el.className = 'caisse-bar';
+    el.innerHTML = `${ICON_CAISSE}<span class="cb-txt"><b>Caisse</b><small>Fond ${eur(r.fond)} · espèces du jour ${eur(r.byPay.esp)}</small></span><span class="cb-amt">${eur(r.theo)}</span>`; }
+  else { el.className = 'caisse-bar todo';
+    el.innerHTML = `${ICON_CAISSE}<span class="cb-txt"><b>Caisse non ouverte</b><small>Indique le fond de caisse du jour</small></span><span class="cb-amt">Ouvrir ›</span>`; }
+}
+$('caisseBar').addEventListener('click', () => cdayOf(todayKey()) ? openCaisse() : openFond(todayKey()));
+function morningPrompt() {
+  const k = todayKey();
+  if (!D.refs.length || cdayOf(k) || D.ui.cprompt === k || !$('sheet').hidden || D.pendingPay) return;
+  D.ui.cprompt = k; persist(); openFond(k, true);
+}
+
+// ---- Compteur de billets et pièces ----
+function denomBlock(id, counts = {}) {
+  const row = v => `<div class="den" data-v="${v}"><span>${v >= 1 ? nfa(v) + ' €' : nfa(v * 100) + ' c'}</span>
+    <button type="button" data-d="-1" aria-label="Moins">−</button><input inputmode="numeric" value="${counts[v] || ''}" placeholder="0" aria-label="Nombre de ${v >= 1 ? nfa(v) + ' €' : nfa(v * 100) + ' centimes'}">
+    <button type="button" data-d="1" aria-label="Plus">+</button><b></b></div>`;
+  return `<div class="denoms" id="${id}"><div class="den-cap">Billets</div>${DENOMS.filter(v => v >= 5).map(row).join('')}<div class="den-cap">Pièces</div>${DENOMS.filter(v => v < 5).map(row).join('')}</div>`;
+}
+function bindDenoms(id, onTotal) {
+  const el = $(id);
+  const calc = () => { let t = 0; const counts = {};
+    el.querySelectorAll('.den').forEach(r => { const v = +r.dataset.v, n = Math.max(0, Math.round(num(r.querySelector('input').value)) || 0);
+      if (n) counts[v] = n; t += n * v; r.querySelector('b').textContent = n ? eur(n * v) : ''; });
+    onTotal(round2(t), counts); };
+  el.addEventListener('click', e => { const b = e.target.closest('button[data-d]'); if (!b) return; const inp = b.parentElement.querySelector('input');
+    inp.value = Math.max(0, (Math.round(num(inp.value)) || 0) + +b.dataset.d) || ''; calc(); });
+  el.addEventListener('input', calc);
+  return calc;
+}
+
+// ---- Ouverture / fond de caisse ----
+function openFond(k, morning = false) {
+  const cd = cdayOf(k), def = defaultFond(k), val = cd ? cd.fond : def.v;
+  if (cd?.z) return openCaisse();
+  openSheet(`
+    <span class="sec-title">${morning ? 'Bonjour ! Fond de caisse' : cd ? 'Ajuster le fond de caisse' : 'Ouvrir la caisse'}</span>
+    <p class="note">${longDay(k)}. Indique l'argent présent dans la caisse avant la première vente.</p>
+    <div class="field"><label class="lbl" for="fdAmt">Fond de caisse</label>
+      <div class="inp"><input id="fdAmt" inputmode="decimal" value="${dec(round2(val))}" autocomplete="off"><span>€</span></div>
+      ${!cd && def.why ? `<p class="note">Proposé : ${eur(def.v)}, ${def.why}.</p>` : ''}</div>
+    <button type="button" class="link" id="fdCountT" style="align-self:flex-start">Compter les billets et pièces</button>
+    <div id="fdCount" hidden>${denomBlock('fdDen', cd?.detail || {})}</div>
+    <div class="msg" id="fErr" hidden></div>
+    <div class="sheet-actions"><button class="btn ghost" id="fdLater">${morning ? 'Plus tard' : 'Annuler'}</button><button class="btn" id="fdSave">${cd ? 'Enregistrer' : 'Ouvrir la caisse'}</button></div>`);
+  let detail = cd?.detail || null;
+  const recount = bindDenoms('fdDen', (t, c) => { if (!$('fdCount').hidden) { $('fdAmt').value = dec(t); detail = c; } });
+  $('fdCountT').onclick = () => { $('fdCount').hidden = !$('fdCount').hidden; if (!$('fdCount').hidden) recount(); };
+  $('fdAmt').addEventListener('input', () => { detail = null; });
+  $('fdLater').onclick = closeSheet;
+  $('fdSave').onclick = () => {
+    const v = num($('fdAmt').value);
+    if (!(v >= 0)) return sheetErr('Indique un montant, par exemple 150 ou 0.');
+    if (cd) Object.assign(cd, { fond: round2(v), detail, upd: Date.now() });
+    else D.cdays.push({ id: 'cd-' + k, day: k, fond: round2(v), detail, opened: Date.now(), upd: Date.now() });
+    writeNow(); renderSales(); toast(cd ? 'Fond de caisse ajusté' : `Caisse ouverte avec ${eur(v)}`);
+    openCaisse();
+  };
+}
+
+// ---- Vue de la caisse du jour ----
+function openCaisse() {
+  const k = todayKey(), r = dayReport(k), z = r.cd?.z;
+  openSheet(`
+    <div class="zhead"><span class="sec-title">Caisse du jour</span>${z ? `<span class="ztag z">Z n°${zNumber(k)}</span>` : '<span class="ztag">Ouverte</span>'}</div>
+    <p class="note">${longDay(k)}${r.cd ? ` · ouverte à ${hm(r.cd.opened)}` : ''}</p>
+    <div class="ledger">
+      <div><span>Fond de caisse</span><span>${eur(r.fond)}</span></div>
+      <div><span>Ventes en espèces<small>${r.nPay.esp} vente${r.nPay.esp > 1 ? 's' : ''}</small></span><span>+ ${eur(r.byPay.esp)}</span></div>
+      ${r.apports ? `<div><span>Entrées d'argent</span><span>+ ${eur(r.apports)}</span></div>` : ''}
+      ${r.retraits ? `<div><span>Sorties d'argent</span><span>− ${eur(r.retraits)}</span></div>` : ''}
+      <div class="sum"><span>En caisse (théorique)</span><span>${eur(r.theo)}</span></div>
+      ${z ? `<div><span>Compté à la clôture</span><span>${eur(z.counted)}</span></div>` : ''}
+    </div>
+    ${r.mv.length ? `<div class="field"><span class="lbl">Entrées et sorties d'argent</span><div class="ledger" id="cmList">${r.mv.map(m => `<div data-cm="${m.id}"><span>${hm(m.ts)} · ${esc((CASH_REASONS[m.amount > 0 ? 'apport' : 'retrait'][m.reason]) || 'Autre')}${m.note ? `<small>${esc(m.note)}</small>` : ''}${z ? '' : ' <button class="del" data-act="cmDel">Annuler</button>'}</span><span>${m.amount > 0 ? '+' : '−'} ${eur(Math.abs(m.amount))}</span></div>`).join('')}</div></div>` : ''}
+    <p class="note">Ventes du jour, tous paiements : <b>${eur(r.total)}</b> (carte ${eur(r.byPay.cb)}, autre ${eur(r.byPay.autre)}).</p>
+    ${z ? `<div class="locked">Journée clôturée à ${hm(z.ts)}. Les ventes de ce jour ne peuvent plus être annulées.</div>
+      <div class="sheet-actions"><button class="btn" id="cZView">Voir le Z n°${zNumber(k)}</button><button class="btn ghost" id="cZHist">Historique des Z</button></div>
+      <div id="cReopenZone"><button class="btn danger-ghost block" id="cReopen">Rouvrir la journée</button></div>`
+    : `<div class="sheet-actions"><button class="btn ghost" id="cFond">Ajuster le fond</button><button class="btn ghost" id="cMove">Entrée / sortie</button></div>
+      <div class="sheet-actions"><button class="btn ghost" id="cX">Rapport X</button><button class="btn" id="cZ">Clôturer · Z</button></div>
+      <button class="btn ghost block" id="cZHist">Historique des Z</button>`}
+    <button class="btn ghost block" id="cClose">Fermer</button>`);
+  $('cClose').onclick = closeSheet;
+  $('cZHist').onclick = openZHistory;
+  if (z) {
+    $('cZView').onclick = () => openReport(k);
+    $('cReopen').onclick = () => {
+      $('cReopenZone').innerHTML = `<div class="confirm round">Rouvrir la journée annule le Z n°${zNumber(k)}. Il faudra refaire la clôture ce soir.
+        <button class="btn danger" id="cReYes">Rouvrir</button><button class="btn ghost" id="cReNo">Garder le Z</button></div>`;
+      $('cReNo').onclick = openCaisse;
+      $('cReYes').onclick = () => { delete r.cd.z; r.cd.upd = Date.now(); writeNow(); renderSales(); toast('Journée rouverte'); openCaisse(); };
+    };
+  } else {
+    $('cFond').onclick = () => openFond(k);
+    $('cMove').onclick = openCashMove;
+    $('cX').onclick = () => openReport(k, true);
+    $('cZ').onclick = () => openZ(k);
+    $('cmList')?.addEventListener('click', e => {
+      const b = e.target.closest('[data-act]'); if (!b) return; const row = b.closest('[data-cm]'), id = row.dataset.cm;
+      if (b.dataset.act === 'cmDel') { if (row.nextElementSibling?.classList.contains('confirm')) return;
+        row.insertAdjacentHTML('afterend', `<div class="confirm round" data-cm="${id}">Annuler ce mouvement d'argent ?<button class="btn danger" data-act="cmYes">Annuler</button><button class="btn ghost" data-act="cmNo">Garder</button></div>`); }
+      else if (b.dataset.act === 'cmNo') row.remove();
+      else if (b.dataset.act === 'cmYes') { tomb(id); D.cmoves = D.cmoves.filter(m => m.id !== id); writeNow(); renderSales(); openCaisse(); }
+    });
+  }
+}
+
+// ---- Entrée / sortie d'argent ----
+function openCashMove() {
+  openSheet(`
+    <span class="sec-title">Entrée / sortie d'argent</span>
+    <div class="seg" id="mType"><button type="button" data-v="retrait" aria-pressed="true">Sortie</button><button type="button" data-v="apport" aria-pressed="false">Entrée</button></div>
+    <div class="field"><span class="lbl">Motif</span><div class="chips" id="mReason"></div></div>
+    <div class="field"><label class="lbl" for="mAmt">Montant</label><div class="inp"><input id="mAmt" inputmode="decimal" placeholder="0,00" autocomplete="off"><span>€</span></div></div>
+    <div class="field"><label class="lbl" for="mNote">Précision (facultatif)</label><div class="inp"><input id="mNote" placeholder="Achat de gobelets, monnaie de la banque…" autocomplete="off"></div></div>
+    <div class="msg" id="fErr" hidden></div>
+    <div class="sheet-actions"><button class="btn ghost" id="mBack">Retour</button><button class="btn" id="mSave">Enregistrer</button></div>`);
+  let type = 'retrait';
+  const paintReasons = () => { $('mReason').innerHTML = Object.entries(CASH_REASONS[type]).map(([k, v], i) => `<button type="button" data-v="${k}" aria-pressed="${i === 0}">${v}</button>`).join(''); };
+  paintReasons(); chipGroup($('mReason'));
+  chipGroup($('mType'), v => { type = v; paintReasons(); });
+  $('mBack').onclick = openCaisse;
+  $('mSave').onclick = () => {
+    const a = num($('mAmt').value); if (!(a > 0)) return sheetErr('Indique un montant supérieur à zéro.');
+    D.cmoves.push({ id: uid(), ts: Date.now(), amount: round2(type === 'apport' ? a : -a), reason: picked($('mReason')) || 'autre', note: $('mNote').value.trim() || undefined });
+    writeNow(); renderSales(); toast(type === 'apport' ? `Entrée de ${eur(a)} enregistrée` : `Sortie de ${eur(a)} enregistrée`); openCaisse();
+  };
+}
+
+// ---- Clôture Z ----
+function openZ(k) {
+  const r = dayReport(k), fondPrev = r.fond;
+  openSheet(`
+    <span class="sec-title">Clôture · Z n°${zDays().filter(d => d < k).length + 1}</span>
+    <p class="note">${longDay(k)} · ${r.n} vente${r.n > 1 ? 's' : ''} · ${eur(r.total)}</p>
+    <div class="locked">Avant de clôturer, <b>synchronise tous les appareils</b> qui ont vendu aujourd'hui, pour que le Z compte toutes les ventes.</div>
+    <div class="field"><span class="lbl">Compte les espèces de la caisse</span>${denomBlock('zDen')}</div>
+    <div class="field"><label class="lbl" for="zCount">Total compté</label><div class="inp"><input id="zCount" inputmode="decimal" placeholder="0,00" autocomplete="off"><span>€</span></div></div>
+    <div class="ledger">
+      <div><span>En caisse (théorique)</span><span>${eur(r.theo)}</span></div>
+      <div><span>Écart</span><span id="zEcart">—</span></div>
+    </div>
+    <div class="field"><label class="lbl" for="zKeep">Fond gardé pour demain</label><div class="inp"><input id="zKeep" inputmode="decimal" value="${dec(fondPrev)}" autocomplete="off"><span>€</span></div>
+      <p class="note" id="zOut"></p></div>
+    <div class="msg" id="fErr" hidden></div>
+    <div id="zZone" class="sheet-actions"><button class="btn ghost" id="zBack">Retour</button><button class="btn" id="zGo">Clôturer la journée</button></div>`);
+  let detail = null;
+  const paint = () => { const c = num($('zCount').value), keep = num($('zKeep').value);
+    if (!(c >= 0)) { $('zEcart').textContent = '—'; $('zOut').textContent = ''; return; }
+    const e = round2(c - r.theo), cls = Math.abs(e) < 0.005 ? 'ok' : Math.abs(e) <= 2 ? 'mid' : 'bad';
+    $('zEcart').innerHTML = `<span class="ecart ${cls}">${e > 0 ? '+' : e < 0 ? '−' : ''}${eur(Math.abs(e))}</span>`;
+    $('zOut').textContent = keep >= 0 ? (c - keep >= 0 ? `À mettre de côté (banque) : ${eur(round2(c - keep))}` : `Il manque ${eur(round2(keep - c))} pour ce fond.`) : ''; };
+  bindDenoms('zDen', (t, cnt) => { if (t > 0 || Object.keys(cnt).length) { $('zCount').value = dec(t); detail = cnt; paint(); } });
+  $('zCount').addEventListener('input', () => { detail = null; paint(); });
+  $('zKeep').addEventListener('input', paint);
+  $('zBack').onclick = openCaisse;
+  $('zGo').onclick = () => {
+    const c = num($('zCount').value), keep = num($('zKeep').value);
+    if (!(c >= 0)) return sheetErr('Compte les espèces ou indique le total compté.');
+    if (!(keep >= 0)) return sheetErr('Indique le fond gardé pour demain (0 si tu vides la caisse).');
+    $('zZone').outerHTML = `<div class="confirm round" id="zZone">Clôture définitive : les ventes du jour ne pourront plus être annulées.
+      <button class="btn" id="zYes">Clôturer</button><button class="btn ghost" id="zNo">Retour</button></div>`;
+    $('zNo').onclick = () => openZ(k);
+    $('zYes').onclick = () => {
+      let cd = cdayOf(k); if (!cd) { cd = { id: 'cd-' + k, day: k, fond: 0, opened: Date.now() }; D.cdays.push(cd); }
+      const rr = dayReport(k);
+      cd.z = { ts: Date.now(), counted: round2(c), keep: round2(keep), detail, theo: rr.theo, ecart: round2(c - rr.theo),
+        snap: { n: rr.n, bottles: rr.bottles, total: rr.total, byPay: rr.byPay, nPay: rr.nPay, prod: rr.prod, fond: rr.fond, apports: rr.apports, retraits: rr.retraits, first: rr.first, last: rr.last } };
+      cd.upd = Date.now(); writeNow(); renderSales(); toast(`Journée clôturée · Z n°${zNumber(k)}`); openReport(k);
+    };
+  };
+}
+
+// ---- Rapport X (situation) ou Z (clôture figée) ----
+function openReport(k, isX = false) {
+  const live = dayReport(k), z = !isX && live.cd?.z;
+  const r = z ? { ...live, ...z.snap } : live;
+  const no = z ? zNumber(k) : 0;
+  const grand = z ? zDays().filter(d => d <= k).reduce((t, d) => t + (cdayOf(d).z.snap?.total || 0), 0) : 0;
+  const lines = [];
+  const L = (a, b, cls = '') => `<div${cls ? ` class="${cls}"` : ''}><span>${a}</span><span>${b}</span></div>`;
+  openSheet(`
+    <div class="zhead"><span class="zno">${z ? `Z n°${no}` : 'Rapport X'}</span><span class="ztag${z ? ' z' : ''}">${z ? 'Clôture' : 'Situation'}</span></div>
+    <p class="note">${longDay(k)} · ${z ? `clôturé à ${hm(z.ts)}` : `édité à ${hm(Date.now())}, sans clôture`}${r.first ? ` · ventes de ${hm(r.first)} à ${hm(r.last)}` : ''}</p>
+    <div class="field"><span class="lbl">Ventes</span><div class="ledger">
+      ${L('Nombre de ventes', r.n)}${L('Bouteilles vendues', r.bottles)}
+      ${L('Chiffre d’affaires TTC', eur(r.total), 'sum')}
+      ${Object.keys(PAY).map(p => L(`${PAY[p]}<small>${r.nPay[p] || 0} vente${(r.nPay[p] || 0) > 1 ? 's' : ''}</small>`, eur(r.byPay[p] || 0))).join('')}
+    </div></div>
+    <div class="field"><span class="lbl">Par article</span><div class="ledger">
+      ${r.prod.length ? r.prod.map(([nm, p]) => L(`${esc(nm)}<small>${p.q} bouteille${p.q > 1 ? 's' : ''}</small>`, eur(p.c))).join('') : '<p class="note">Aucune vente.</p>'}
+    </div></div>
+    <div class="field"><span class="lbl">Espèces</span><div class="ledger">
+      ${L('Fond de caisse', eur(r.fond))}${L('Ventes en espèces', '+ ' + eur(r.byPay.esp || 0))}
+      ${r.apports ? L('Entrées d’argent', '+ ' + eur(r.apports)) : ''}${r.retraits ? L('Sorties d’argent', '− ' + eur(r.retraits)) : ''}
+      ${L('En caisse (théorique)', eur(z ? z.theo : r.theo), 'sum')}
+      ${z ? L('Compté', eur(z.counted)) + L('Écart', `<span class="ecart ${Math.abs(z.ecart) < 0.005 ? 'ok' : Math.abs(z.ecart) <= 2 ? 'mid' : 'bad'}">${z.ecart > 0 ? '+' : z.ecart < 0 ? '−' : ''}${eur(Math.abs(z.ecart))}</span>`)
+        + L('Fond gardé pour demain', eur(z.keep)) + L('Mis de côté', eur(round2(z.counted - z.keep))) : ''}
+    </div></div>
+    ${z ? `<div class="ledger">${L('Cumul depuis le Z n°1', eur(grand), 'sum')}</div>` : ''}
+    <div class="sheet-actions"><button class="btn ghost" id="rFile">Enregistrer en fichier</button><button class="btn" id="rClose">Fermer</button></div>`);
+  $('rClose').onclick = () => (k === todayKey() ? openCaisse() : openZHistory());
+  $('rFile').onclick = () => {
+    const t = [`L'EAU DE LÀ`, z ? `TICKET Z N°${no}` : 'RAPPORT X (sans clôture)', longDay(k), z ? `Clôturé à ${hm(z.ts)}` : `Édité à ${hm(Date.now())}`, '',
+      `Ventes : ${r.n}`, `Bouteilles : ${r.bottles}`, `Chiffre d'affaires TTC : ${eur(r.total)}`,
+      ...Object.keys(PAY).map(p => `  ${PAY[p]} : ${eur(r.byPay[p] || 0)} (${r.nPay[p] || 0})`), '', 'Par article :',
+      ...r.prod.map(([nm, p]) => `  ${nm} : ${p.q} × → ${eur(p.c)}`), '',
+      `Fond de caisse : ${eur(r.fond)}`, `Ventes espèces : ${eur(r.byPay.esp || 0)}`, `Entrées : ${eur(r.apports)}`, `Sorties : ${eur(r.retraits)}`,
+      `En caisse (théorique) : ${eur(z ? z.theo : r.theo)}`,
+      ...(z ? [`Compté : ${eur(z.counted)}`, `Écart : ${eur(z.ecart)}`, `Fond gardé : ${eur(z.keep)}`, `Mis de côté : ${eur(round2(z.counted - z.keep))}`, '', `Cumul depuis le Z n°1 : ${eur(grand)}`] : [])].join('\r\n');
+    exportFile(`eau-de-la-${z ? 'Z' + String(no).padStart(4, '0') : 'X'}-${k}.txt`, 'text/plain', t);
+  };
+}
+function openZHistory() {
+  const days = zDays().reverse();
+  openSheet(`
+    <span class="sec-title">Historique des Z</span>
+    ${days.length ? `<div class="zlist">${days.map(d => { const z = cdayOf(d).z;
+      return `<button type="button" data-day="${d}"><span><b>Z n°${zNumber(d)}</b> · ${keyToDate(d).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+        <span><b>${eur(z.snap?.total || 0)}</b> <span class="ecart ${Math.abs(z.ecart) < 0.005 ? 'ok' : Math.abs(z.ecart) <= 2 ? 'mid' : 'bad'}">${z.ecart > 0 ? '+' : z.ecart < 0 ? '−' : ''}${eur(Math.abs(z.ecart))}</span></span></button>`; }).join('')}</div>`
+    : '<p class="note">Aucune clôture pour l’instant. Fais un Z le soir depuis le bandeau Caisse.</p>'}
+    <div class="sheet-actions">${days.length ? '<button class="btn ghost" id="zhCsv">Exporter (CSV)</button>' : ''}<button class="btn" id="zhClose">Fermer</button></div>`);
+  $('zhClose').onclick = () => cdayOf(todayKey()) ? openCaisse() : closeSheet();
+  $('sheetIn').querySelector('.zlist')?.addEventListener('click', e => { const b = e.target.closest('button[data-day]'); if (b) openReport(b.dataset.day); });
+  if ($('zhCsv')) $('zhCsv').onclick = exportZCsv;
+}
+function exportZCsv() {
+  const rows = [['Z', 'Date', 'Ventes', 'Bouteilles', 'CA TTC', 'Espèces', 'Carte SumUp', 'Autre', 'Fond', 'Entrées', 'Sorties', 'Théorique', 'Compté', 'Écart', 'Fond gardé']];
+  zDays().forEach(d => { const z = cdayOf(d).z, s = z.snap || {};
+    rows.push([zNumber(d), d, s.n, s.bottles, nf(s.total || 0, 2), nf(s.byPay?.esp || 0, 2), nf(s.byPay?.cb || 0, 2), nf(s.byPay?.autre || 0, 2),
+      nf(s.fond || 0, 2), nf(s.apports || 0, 2), nf(s.retraits || 0, 2), nf(z.theo, 2), nf(z.counted, 2), nf(z.ecart, 2), nf(z.keep, 2)]); });
+  exportFile(`eau-de-la-clotures-Z-${todayKey()}.csv`, 'text/csv', '﻿' + rows.map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(';')).join('\r\n'));
+}
 
 // ================= Synchronisation entre deux téléphones =================
 let syncing = false;
@@ -1577,12 +1896,13 @@ function mergeRemote(o) {
   const uni = (a, b) => { const m = new Map(a.map(x => [x.id, x])); let c = 0;
     for (const x of b) if (!m.has(x.id)) { m.set(x.id, x); if (!del[x.id]) c++; }
     return { list: [...m.values()].filter(x => !del[x.id]), c }; };
-  const gone = ['sales', 'moves', 'refs', 'consos', 'recipes'].reduce((t, k) => t + D[k].filter(x => del[x.id] && !D.del[x.id]).length, 0);
+  const gone = ['sales', 'moves', 'refs', 'consos', 'recipes', 'cmoves'].reduce((t, k) => t + D[k].filter(x => del[x.id] && !D.del[x.id]).length, 0);
   const refs = lww(D.refs, R.refs), consos = lww(D.consos, R.consos), recipes = lww(D.recipes, R.recipes);
   const sales = uni(D.sales, R.sales), moves = uni(D.moves, R.moves);
-  Object.assign(D, { refs: refs.list, consos: consos.list, recipes: recipes.list, sales: sales.list, moves: moves.list, del });
+  const cdays = lww(D.cdays, R.cdays), cmoves = uni(D.cmoves, R.cmoves);
+  Object.assign(D, { refs: refs.list, consos: consos.list, recipes: recipes.list, sales: sales.list, moves: moves.list, cdays: cdays.list, cmoves: cmoves.list, del });
   return [['Ventes reçues', sales.c], ['Mouvements de stock reçus', moves.c], ['Produits ajoutés ou modifiés', refs.c],
-    ['Consommables ajoutés ou modifiés', consos.c], ['Recettes ajoutées ou modifiées', recipes.c], ['Éléments supprimés', gone]].filter(([, v]) => v > 0);
+    ['Consommables ajoutés ou modifiés', consos.c], ['Recettes ajoutées ou modifiées', recipes.c], ['Journées de caisse mises à jour', cdays.c], ["Entrées et sorties d'argent reçues", cmoves.c], ['Éléments supprimés', gone]].filter(([, v]) => v > 0);
 }
 window.onSyncData = text => {
   let o = null; try { o = JSON.parse(text); } catch (e) {}
@@ -1608,7 +1928,7 @@ function setTab(t) {
   document.querySelectorAll('nav.tabs button').forEach(b => { if (b.dataset.tab === t) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
   $('viewTitle').textContent = TABS[t][0]; $('viewSub').textContent = TABS[t][1];
   if (t === 'graph') renderGraph();
-  if (t === 'ventes') { if (!$('saleDate').value) $('saleDate').value = todayKey(); $('saleDate').max = todayKey(); }
+  if (t === 'ventes') { if (!$('saleDate').value) $('saleDate').value = todayKey(); $('saleDate').max = todayKey(); morningPrompt(); }
   $('scroll').scrollTop = 0;
 }
 document.querySelector('nav.tabs').addEventListener('click', e => { const b = e.target.closest('button[data-tab]'); if (b) setTab(b.dataset.tab); });
